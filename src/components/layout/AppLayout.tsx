@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import OnlineStatus from '@/components/ui/OnlineStatus'
 
 interface AppLayoutProps {
   anio: number
@@ -53,6 +54,7 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
           onAnioChange={onAnioChange}
           onMenuToggle={() => setMobileOpen((prev) => !prev)}
         />
+        <OnlineStatus />
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           <Outlet context={{ anio }} />
         </main>

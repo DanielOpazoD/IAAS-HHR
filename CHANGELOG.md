@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0] - 2026-03-26
+
+### Added
+- Unsaved changes warning — browser "Leave page?" dialog when form modal is open
+- Loading indicator on form submit — spinner + "Guardando..." + disabled buttons
+- Offline indicator — amber banner "Sin conexión a internet" when offline
+- Date validation in DipForm — prevents fechaRetiro < fechaInstalacion
+- Duplicate record warning — yellow banner when same RUT + mes already exists (non-blocking)
+- Print CSS — professional layout with hospital header, landscape tables, hidden UI
+- 19 Firebase error codes mapped to friendly Spanish messages
+
+### Changed
+- FormActions component now accepts `loading` prop
+- All 5 forms accept `loading` + `onFormChange` props
+- FormComponentProps interface updated with new optional props
+- getErrorMessage returns friendly messages for known Firebase error codes
+- GenericDataPage manages `saving` state and duplicate detection
+
 ## [1.2.0] - 2026-03-26
 
 ### Added

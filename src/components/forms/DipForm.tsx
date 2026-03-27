@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, FormEvent } from 'react'
 import { DispositivoInvasivo, PeriodoDIP } from '@/types'
 import { TIPOS_DIP, SERVICIOS, MESES } from '@/utils/constants'
 import { getMesFromDate, calcDaysBetween } from '@/utils/dates'
@@ -13,11 +13,13 @@ interface Props {
   anio: number
   onSubmit: (data: FormData) => void
   onCancel: () => void
+  loading?: boolean
+  onFormChange?: (values: { rut?: string; mes?: string }) => void
 }
 
 const emptyPeriodo: PeriodoDIP = { fechaInstalacion: '', fechaRetiro: '', numDias: null }
 
-export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
+export default function DipForm({ initial, anio, onSubmit, onCancel, loading, onFormChange }: Props) {
   const [form, setForm] = useState<FormData>({
     mes: initial?.mes || '',
     anio: initial?.anio || anio,
@@ -80,9 +82,26 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
     if (form.periodos.length > 1) setForm((f) => ({ ...f, periodos: f.periodos.filter((_, i) => i !== idx) }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    onFormChange?.({ rut: form.rut, mes: form.mes })
+  }, [form.rut, form.mes, onFormChange])
+
+  /** Validate that no period has fechaRetiro before fechaInstalacion */
+  const dateErrors = useMemo(() => {
+    return form.periodos.map((p) => {
+      if (p.fechaInstalacion && p.fechaRetiro && p.fechaRetiro < p.fechaInstalacion) {
+        return 'Fecha retiro debe ser posterior a instalación'
+      }
+      return ''
+    })
+  }, [form.periodos])
+
+  const hasDateErrors = dateErrors.some(Boolean)
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!validateRutField(form.rut)) return
+    if (hasDateErrors) return
     onSubmit(form)
   }
 
@@ -126,24 +145,26 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
           )}
         </div>
         {form.periodos.map((p, idx) => (
-          <div key={idx} className="grid grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg items-end">
-            <FormField label={`Instalación ${idx + 1}`}>
-              <Input type="date" value={p.fechaInstalacion} onChange={(e) => setPeriodo(idx, 'fechaInstalacion', e.target.value)} />
-            </FormField>
-            <FormField label="Retiro">
-              <Input type="date" value={p.fechaRetiro} onChange={(e) => setPeriodo(idx, 'fechaRetiro', e.target.value)} />
-            </FormField>
-            <FormField label="N° Días">
-              <Input value={p.numDias != null ? String(p.numDias) : ''} disabled className="bg-gray-100" />
-            </FormField>
-            <div className="flex items-end pb-0.5">
-              {form.periodos.length > 1 && (
-                <button type="button" onClick={() => removePeriodo(idx)} className="p-2 text-red-400 hover:text-red-600" aria-label="Eliminar período">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+          <div key={idx}>
+            <div className="grid grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg items-end">
+              <FormField label={`Instalación ${idx + 1}`}>
+                <Input type="date" value={p.fechaInstalacion} onChange={(e) => setPeriodo(idx, 'fechaInstalacion', e.target.value)} />
+              </FormField>
+              <FormField label="Retiro" error={dateErrors[idx]}>
+                <Input type="date" value={p.fechaRetiro} onChange={(e) => setPeriodo(idx, 'fechaRetiro', e.target.value)} aria-invalid={!!dateErrors[idx]} />
+              </FormField>
+              <FormField label="N° Días">
+                <Input value={p.numDias != null ? String(p.numDias) : ''} disabled className="bg-gray-100" />
+              </FormField>
+              <div className="flex items-end pb-0.5">
+                {form.periodos.length > 1 && (
+                  <button type="button" onClick={() => removePeriodo(idx)} className="p-2 text-red-400 hover:text-red-600" aria-label="Eliminar período">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -153,7 +174,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
       <FormField label="Revisión Ficha Clínica">
         <Textarea value={form.revisionFC} onChange={(e) => set('revisionFC', e.target.value)} rows={2} />
       </FormField>
-      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} loading={loading} />
     </form>
   )
 }

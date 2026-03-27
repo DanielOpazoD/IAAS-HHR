@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, FormEvent } from 'react'
 import { CirugiaTrazadora } from '@/types'
 import { TIPOS_CIRUGIA, MESES } from '@/utils/constants'
 import { getMesFromDate } from '@/utils/dates'
@@ -14,9 +14,11 @@ interface Props {
   anio: number
   onSubmit: (data: FormData) => void
   onCancel: () => void
+  loading?: boolean
+  onFormChange?: (values: { rut?: string; mes?: string }) => void
 }
 
-export default function CirugiaForm({ initial, anio, onSubmit, onCancel }: Props) {
+export default function CirugiaForm({ initial, anio, onSubmit, onCancel, loading, onFormChange }: Props) {
   const { form, set } = useFormState<FormData>(initial, {
     mes: '', anio, nombre: '', rut: '', fechaCirugia: '',
     tipoCirugia: TIPOS_CIRUGIA[0], fechaPrimerControl: '', observaciones: '',
@@ -33,7 +35,11 @@ export default function CirugiaForm({ initial, anio, onSubmit, onCancel }: Props
     }
   }, [form.fechaCirugia, form.mes, set])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    onFormChange?.({ rut: form.rut, mes: form.mes })
+  }, [form.rut, form.mes, onFormChange])
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!validateRutField(form.rut)) return
     onSubmit(form)
@@ -87,7 +93,7 @@ export default function CirugiaForm({ initial, anio, onSubmit, onCancel }: Props
       <FormField label="Observaciones (Segundo Control)">
         <Textarea value={form.observaciones2} onChange={(e) => set('observaciones2', e.target.value)} rows={2} />
       </FormField>
-      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} loading={loading} />
     </form>
   )
 }

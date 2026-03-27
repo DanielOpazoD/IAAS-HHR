@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, FormEvent } from 'react'
 import { PartoCesarea } from '@/types'
 import { TIPOS_PARTO } from '@/utils/constants'
 import { getMesFromDate } from '@/utils/dates'
@@ -14,9 +14,11 @@ interface Props {
   anio: number
   onSubmit: (data: FormData) => void
   onCancel: () => void
+  loading?: boolean
+  onFormChange?: (values: { rut?: string; mes?: string }) => void
 }
 
-export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) {
+export default function PartoForm({ initial, anio, onSubmit, onCancel, loading, onFormChange }: Props) {
   const { form, set } = useFormState<FormData>(initial, {
     mes: '', anio, nombre: '', rut: '', fechaParto: '',
     tipo: TIPOS_PARTO[0], conTP: '', fechaPrimerControl: '',
@@ -33,7 +35,11 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
     }
   }, [form.fechaParto, form.mes, set])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    onFormChange?.({ rut: form.rut, mes: form.mes })
+  }, [form.rut, form.mes, onFormChange])
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!validateRutField(form.rut)) return
     onSubmit(form)
@@ -86,7 +92,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
       <FormField label="Observaciones">
         <Textarea value={form.observaciones} onChange={(e) => set('observaciones', e.target.value)} rows={2} />
       </FormField>
-      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} loading={loading} />
     </form>
   )
 }

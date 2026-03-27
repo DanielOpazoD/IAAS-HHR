@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, FormEvent } from 'react'
 import { RegistroIAAS } from '@/types'
 import { getMesFromDate } from '@/utils/dates'
 import { useFormState } from '@/hooks/useFormState'
@@ -14,9 +14,11 @@ interface Props {
   nextNumero?: number
   onSubmit: (data: FormData) => void
   onCancel: () => void
+  loading?: boolean
+  onFormChange?: (values: { rut?: string; mes?: string }) => void
 }
 
-export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubmit, onCancel }: Props) {
+export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubmit, onCancel, loading, onFormChange }: Props) {
   const { form, set } = useFormState<FormData>(initial, {
     numero: nextNumero, mes: '', anio, nombre: '', rut: '', sexo: '',
     fechaIngreso: '', fechaInstalacion: '', fechaDiagCx: '',
@@ -35,7 +37,11 @@ export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubm
     }
   }, [form.fechaIngreso, form.mes, set])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    onFormChange?.({ rut: form.rut, mes: form.mes })
+  }, [form.rut, form.mes, onFormChange])
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!validateRutField(form.rut)) return
     onSubmit(form)
@@ -111,7 +117,7 @@ export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubm
       <FormField label="Observaciones (Criterios, segundo agente, etc.)">
         <Textarea value={form.observaciones} onChange={(e) => set('observaciones', e.target.value)} rows={2} />
       </FormField>
-      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} loading={loading} />
     </form>
   )
 }

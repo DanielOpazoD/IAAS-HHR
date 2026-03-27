@@ -27,6 +27,8 @@ export interface FormComponentProps<T> {
   onSubmit: (data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancel: () => void
   nextNumero?: number
+  loading?: boolean
+  onFormChange?: (values: { rut?: string; mes?: string }) => void
 }
 
 // ── Registry configuration ──

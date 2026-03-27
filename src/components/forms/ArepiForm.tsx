@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, FormEvent } from 'react'
 import { AgenteRiesgoEpidemico } from '@/types'
 import { SERVICIOS } from '@/utils/constants'
 import { useFormState } from '@/hooks/useFormState'
@@ -13,9 +13,11 @@ interface Props {
   anio: number
   onSubmit: (data: FormData) => void
   onCancel: () => void
+  loading?: boolean
+  onFormChange?: (values: { rut?: string; mes?: string }) => void
 }
 
-export default function ArepiForm({ initial, anio, onSubmit, onCancel }: Props) {
+export default function ArepiForm({ initial, anio, onSubmit, onCancel, loading, onFormChange }: Props) {
   const { form, set } = useFormState<FormData>(initial, {
     fechaVE: '', anio, servicioClinico: SERVICIOS[0],
     nombre: '', edad: '', rut: '', tipoVigilancia: '', criteriosEpidemiologicos: '',
@@ -24,7 +26,11 @@ export default function ArepiForm({ initial, anio, onSubmit, onCancel }: Props) 
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    onFormChange?.({ rut: form.rut })
+  }, [form.rut, onFormChange])
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!validateRutField(form.rut)) return
     onSubmit(form)
@@ -59,7 +65,7 @@ export default function ArepiForm({ initial, anio, onSubmit, onCancel }: Props) 
       <FormField label="Criterios Epidemiológicos Identificados">
         <Textarea value={form.criteriosEpidemiologicos} onChange={(e) => set('criteriosEpidemiologicos', e.target.value)} rows={3} />
       </FormField>
-      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} loading={loading} />
     </form>
   )
 }

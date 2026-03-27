@@ -6,10 +6,16 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(new Error('something broke'))).toBe('something broke')
   })
 
-  it('extracts code + message from Firebase-style errors', () => {
+  it('returns friendly Spanish message for known Firebase error codes', () => {
     const err = new Error('Permission denied')
     ;(err as unknown as { code: string }).code = 'permission-denied'
-    expect(getErrorMessage(err)).toBe('permission-denied: Permission denied')
+    expect(getErrorMessage(err)).toBe('No tienes permisos para esta acción')
+  })
+
+  it('falls back to code + message for unknown Firebase error codes', () => {
+    const err = new Error('Something weird')
+    ;(err as unknown as { code: string }).code = 'unknown-code'
+    expect(getErrorMessage(err)).toBe('unknown-code: Something weird')
   })
 
   it('returns the string itself for string errors', () => {

@@ -9,6 +9,8 @@ import SkeletonTable from '@/components/ui/SkeletonTable'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useToastContext } from '@/context/ToastContext'
 import { getErrorMessage } from '@/utils/errors'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
 import type { RegistryConfig } from '@/config/registries'
 
 /**
@@ -25,8 +27,16 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   const [editing, setEditing] = useState<(T & { id: string }) | undefined>()
   const [filterMes, setFilterMes] = useState('')
   const [filterSecondary, setFilterSecondary] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [formValues, setFormValues] = useState<{ rut?: string; mes?: string }>({})
   const { confirm, ConfirmDialog } = useConfirm()
   const { addToast } = useToastContext()
+
+  // Warn user about unsaved changes when modal is open
+  useUnsavedChanges(modalOpen)
+
+  // Check for duplicate records
+  const duplicateWarning = useDuplicateCheck(data as Array<Record<string, unknown>>, formValues, editing?.id)
 
   const filtered = data.filter((d) => {
     const rec = d as Record<string, unknown>
@@ -38,6 +48,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   const nextNumero = config.getNextNumero?.(data)
 
   const handleSubmit = async (formData: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) => {
+    setSaving(true)
     try {
       if (editing?.id) {
         await update(editing.id, formData)
@@ -50,6 +61,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       setEditing(undefined)
     } catch (err) {
       addToast(`Error al guardar: ${getErrorMessage(err)}`, 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -166,12 +179,22 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         title={editing ? `Editar ${config.entityName.singular}` : `Nuev${config.entityName.singular.endsWith('a') || config.entityName.singular === 'Cirugía' ? 'a' : 'o'} ${config.entityName.singular}`}
         wide={config.wideModal}
       >
+        {duplicateWarning && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-start gap-2">
+            <svg className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {duplicateWarning}
+          </div>
+        )}
         <FormComponent
           initial={editing}
           anio={anio}
           onSubmit={handleSubmit}
           onCancel={closeModal}
           nextNumero={nextNumero}
+          loading={saving}
+          onFormChange={setFormValues}
         />
       </Modal>
 
