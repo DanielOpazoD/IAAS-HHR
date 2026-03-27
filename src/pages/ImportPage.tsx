@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseExcelFile, ImportResult } from '@/services/excel/excelImport'
 import { isFirebaseConfigured } from '@/config/firebase'
+import { useToastContext } from '@/context/ToastContext'
 import * as firestoreService from '@/services/firestore'
 
 function getLocalKey(collection: string, anio: number) {
@@ -18,6 +19,7 @@ function saveLocal<T>(key: string, data: T[]) {
 
 export default function ImportPage() {
   const navigate = useNavigate()
+  const { addToast } = useToastContext()
   const [result, setResult] = useState<ImportResult | null>(null)
   const [fileName, setFileName] = useState('')
   const [importing, setImporting] = useState(false)
@@ -93,8 +95,10 @@ export default function ImportPage() {
       }
 
       setDone(true)
+      addToast(`${total} registros importados correctamente`, 'success')
     } catch (err: unknown) {
       setError(`Error al importar: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+      addToast('Error al importar datos', 'error')
     } finally {
       setImporting(false)
     }

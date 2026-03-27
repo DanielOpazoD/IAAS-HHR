@@ -111,7 +111,14 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         title={config.title}
         subtitle={config.subtitle(anio)}
         onAdd={openNew}
-        onExport={() => config.exportFn(filtered, anio)}
+        onExport={() => {
+          try {
+            config.exportFn(filtered, anio)
+            addToast('Excel exportado correctamente', 'success')
+          } catch {
+            addToast('Error al exportar Excel', 'error')
+          }
+        }}
       />
 
       {(config.hasMonthFilter || config.secondaryFilter) && (

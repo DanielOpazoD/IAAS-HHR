@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
+import { useToastContext } from '@/context/ToastContext'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, AgenteRiesgoEpidemico, RegistroIAAS } from '@/types'
 import { exportFullWorkbook } from '@/services/excel/fullExport'
 
@@ -61,8 +62,15 @@ export default function DashboardPage() {
     return { ihoCount: iho, iaasPartos: iaasP, fallecidos: fall, totalRegistros: total, monthlyData: monthly, maxMonthly: maxM }
   }, [cirugias, partos, dip, arepi, iaas])
 
+  const { addToast } = useToastContext()
+
   const handleExportAll = () => {
-    exportFullWorkbook({ cirugias, partos, dip, arepi, registroIaas: iaas }, anio)
+    try {
+      exportFullWorkbook({ cirugias, partos, dip, arepi, registroIaas: iaas }, anio)
+      addToast(`Excel ${anio} exportado correctamente`, 'success')
+    } catch {
+      addToast('Error al exportar Excel', 'error')
+    }
   }
 
   return (

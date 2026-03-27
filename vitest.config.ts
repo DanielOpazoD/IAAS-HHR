@@ -11,5 +11,19 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary'],
+      include: ['src/utils/**', 'src/hooks/**'],
+      exclude: ['src/**/*.test.ts', 'src/__tests__/**'],
+      thresholds: {
+        // Utility functions should have high coverage
+        'src/utils/**': {
+          statements: 80,
+          branches: 70,
+          functions: 80,
+        },
+      },
+    },
   },
 })

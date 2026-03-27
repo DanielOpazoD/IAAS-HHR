@@ -4,16 +4,29 @@ import { getCurrentYear } from '@/utils/dates'
 interface HeaderProps {
   anio: number
   onAnioChange: (anio: number) => void
+  onMenuToggle?: () => void
 }
 
-export default function Header({ anio, onAnioChange }: HeaderProps) {
+export default function Header({ anio, onAnioChange, onMenuToggle }: HeaderProps) {
   const { user, signOut } = useAuth()
   const currentYear = getCurrentYear()
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-4 md:px-6 py-3 flex items-center justify-between sticky top-0 z-10">
       <div className="flex items-center gap-3">
+        {/* Mobile hamburger menu */}
+        {onMenuToggle && (
+          <button
+            onClick={onMenuToggle}
+            className="p-2 -ml-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden"
+            aria-label="Abrir menú"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
         <label className="text-sm text-gray-400 font-medium">Año</label>
         <select
           value={anio}
@@ -28,7 +41,7 @@ export default function Header({ anio, onAnioChange }: HeaderProps) {
       <div className="flex items-center gap-2">
         {user && (
           <>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
               <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold">
                 {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
               </div>

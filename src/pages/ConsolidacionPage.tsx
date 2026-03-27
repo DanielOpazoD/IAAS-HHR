@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
+import { useToastContext } from '@/context/ToastContext'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo } from '@/types'
 import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
 import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '@/utils/rates'
@@ -158,6 +159,17 @@ export default function ConsolidacionPage() {
     return { infecciones: 0, denominador: 0 }
   }, [manualData, cirugias, partos])
 
+  const { addToast } = useToastContext()
+
+  const handleExport = () => {
+    try {
+      exportConsolidacion(anio, cuatrimestre, meses, getDipData, getArepiData, getCxPartosData)
+      addToast('Consolidación exportada correctamente', 'success')
+    } catch {
+      addToast('Error al exportar consolidación', 'error')
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -176,7 +188,7 @@ export default function ConsolidacionPage() {
             <option value={3}>3° Cuatrimestre (Sep-Dic)</option>
           </select>
           <button
-            onClick={() => exportConsolidacion(anio, cuatrimestre, meses, getDipData, getArepiData, getCxPartosData)}
+            onClick={handleExport}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
