@@ -24,10 +24,12 @@ interface ToastContainerProps {
 }
 
 export default function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
+  const hasError = toasts.some(t => t.type === 'error')
+
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm" role="status" aria-live="polite">
+    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm" role="status" aria-live={hasError ? 'assertive' : 'polite'}>
       {toasts.map((toast) => (
         <div
           key={toast.id}

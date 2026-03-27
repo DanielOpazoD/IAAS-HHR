@@ -17,9 +17,12 @@ interface DataTableProps<T> {
   emptyMessage?: string
   searchable?: boolean
   searchKeys?: string[]
+  pageSize?: number
 }
 
 type SortDir = 'asc' | 'desc'
+
+const PAGE_SIZE_DEFAULT = 25
 
 export default function DataTable<T extends { id?: string }>({
   columns,
@@ -29,11 +32,13 @@ export default function DataTable<T extends { id?: string }>({
   emptyMessage = 'No hay registros',
   searchable = true,
   searchKeys = ['nombre', 'rut'],
+  pageSize = PAGE_SIZE_DEFAULT,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [page, setPage] = useState(0)
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -73,6 +78,17 @@ export default function DataTable<T extends { id?: string }>({
 
     return result
   }, [data, debouncedSearch, searchKeys, sortKey, sortDir])
+
+  // Reset page when filters change
+  const totalPages = Math.max(1, Math.ceil(processed.length / pageSize))
+  const safePage = Math.min(page, totalPages - 1)
+  if (safePage !== page) setPage(safePage)
+
+  const paginatedData = useMemo(() => {
+    if (processed.length <= pageSize) return processed
+    const start = page * pageSize
+    return processed.slice(start, start + pageSize)
+  }, [processed, page, pageSize])
 
   if (data.length === 0) {
     return (
@@ -125,6 +141,10 @@ export default function DataTable<T extends { id?: string }>({
                   key={col.key}
                   className={`px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${col.className || ''} ${col.sortable !== false ? 'cursor-pointer select-none hover:text-gray-700' : ''}`}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
+                  onKeyDown={(e) => { if (col.sortable !== false && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleSort(col.key) } }}
+                  tabIndex={col.sortable !== false ? 0 : undefined}
+                  role={col.sortable !== false ? 'button' : undefined}
+                  aria-sort={sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
@@ -142,7 +162,7 @@ export default function DataTable<T extends { id?: string }>({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {processed.map((item, idx) => (
+            {paginatedData.map((item, idx) => (
               <tr key={item.id || idx} className="hover:bg-primary-50/30 transition-colors">
                 {columns.map((col) => (
                   <td key={col.key} className={`px-4 py-3 text-gray-700 ${col.className || ''}`}>
@@ -189,19 +209,49 @@ export default function DataTable<T extends { id?: string }>({
         </table>
       </div>
 
-      {/* Footer with count */}
-      <div className="px-4 py-2.5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+      {/* Footer with count and pagination */}
+      <div className="px-4 py-2.5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between" aria-live="polite" role="status">
         <p className="text-xs text-gray-400">
-          {search ? `${processed.length} de ${data.length} registro${data.length !== 1 ? 's' : ''}` : `${data.length} registro${data.length !== 1 ? 's' : ''}`}
+          {search
+            ? `${processed.length} de ${data.length} registro${data.length !== 1 ? 's' : ''}`
+            : `${data.length} registro${data.length !== 1 ? 's' : ''}`}
+          {processed.length > pageSize && ` — pag. ${page + 1} de ${totalPages}`}
         </p>
-        {sortKey && (
-          <button
-            onClick={() => { setSortKey(null); setSortDir('asc') }}
-            className="text-xs text-gray-400 hover:text-gray-600"
-          >
-            Quitar orden
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {sortKey && (
+            <button
+              onClick={() => { setSortKey(null); setSortDir('asc') }}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Quitar orden
+            </button>
+          )}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-gray-100"
+                aria-label="Pagina anterior"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-500 font-medium min-w-[3rem] text-center">{page + 1} / {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-gray-100"
+                aria-label="Pagina siguiente"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -30,6 +30,13 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-gray-50/50">
+      {/* Skip to content link for keyboard/screen reader users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg focus:text-sm focus:font-medium"
+      >
+        Ir al contenido principal
+      </a>
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -56,7 +63,7 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
           onMenuToggle={() => setMobileOpen((prev) => !prev)}
         />
         <OnlineStatus />
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main id="main-content" className="flex-1 p-4 md:p-6 overflow-auto" tabIndex={-1}>
           <Outlet context={{ anio }} />
         </main>
       </div>

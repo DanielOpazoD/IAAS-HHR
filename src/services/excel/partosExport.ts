@@ -1,47 +1,39 @@
 import { PartoCesarea } from '@/types'
-import { XLSX, headerStyle, titleStyle, subtitleStyle, saveWorkbook, setColWidths, setRowHeight, addCell, getRowStyle, getRowStyleCenter, badgeYes, badgeNo, mergeCells } from './utils'
+import { XLSX, saveWorkbook, badgeYes, badgeNo } from './utils'
+import { buildSheet, SheetConfig } from './sheetBuilder'
 import { formatDateDisplay } from '@/utils/dates'
 
+function partosConfig(anio: number): SheetConfig<PartoCesarea> {
+  return {
+    title: { text: 'ENDOMETRITIS PUERPERAL', span: 3 },
+    subtitle: { text: `Fuente: Estadística diaria paciente hospitalizado - ${anio}`, startCol: 3, endCol: 10 },
+    headerRow: 2,
+    columns: [
+      { header: 'Mes', width: 11, getValue: (d) => d.mes, center: true },
+      { header: 'Nombre del Paciente', width: 30, getValue: (d) => d.nombre },
+      { header: 'RUT', width: 14, getValue: (d) => d.rut, center: true },
+      { header: 'Fecha Parto/Cesárea', width: 16, getValue: (d) => formatDateDisplay(d.fechaParto), center: true },
+      { header: 'Parto/Cesárea', width: 16, getValue: (d) => d.tipo, center: true },
+      { header: 'Con/Sin TP', width: 10, getValue: (d) => d.conTP, center: true },
+      { header: 'Fecha 1er Control', width: 14, getValue: (d) => formatDateDisplay(d.fechaPrimerControl), center: true },
+      { header: 'Control Post Parto', width: 30, getValue: (d) => d.controlPostParto },
+      {
+        header: 'Signos IAAS', width: 10, center: true,
+        getValue: (d) => d.signosSintomasIAAS || '',
+        getStyle: (d, base) => d.signosSintomasIAAS === 'SI' ? badgeYes : (d.signosSintomasIAAS === 'NO' ? badgeNo : base),
+      },
+      { header: '30 días', width: 10, getValue: (d) => d.dias30, center: true },
+      { header: 'Observaciones', width: 30, getValue: (d) => d.observaciones },
+    ],
+  }
+}
+
 export function buildPartosSheet(data: PartoCesarea[], anio: number): XLSX.WorkSheet {
-  const ws: XLSX.WorkSheet = {}
-
-  addCell(ws, 'A1', 'ENDOMETRITIS PUERPERAL', titleStyle)
-  addCell(ws, 'D1', `Fuente: Estadística diaria paciente hospitalizado - ${anio}`, subtitleStyle)
-  mergeCells(ws, { r: 0, c: 0 }, { r: 0, c: 2 })
-  mergeCells(ws, { r: 0, c: 3 }, { r: 0, c: 10 })
-  setRowHeight(ws, 0, 28)
-
-  const headers = ['Mes', 'Nombre del Paciente', 'RUT', 'Fecha Parto/Cesárea', 'Parto/Cesárea', 'Con/Sin TP', 'Fecha 1er Control', 'Control Post Parto', 'Signos IAAS', '30 días', 'Observaciones']
-  const cols = 'ABCDEFGHIJK'
-  headers.forEach((h, i) => addCell(ws, `${cols[i]}3`, h, headerStyle))
-  setRowHeight(ws, 2, 30)
-
-  data.forEach((row, i) => {
-    const r = i + 4
-    const s = getRowStyle(i)
-    const sc = getRowStyleCenter(i)
-    addCell(ws, `A${r}`, row.mes, sc)
-    addCell(ws, `B${r}`, row.nombre, s)
-    addCell(ws, `C${r}`, row.rut, sc)
-    addCell(ws, `D${r}`, formatDateDisplay(row.fechaParto), sc)
-    addCell(ws, `E${r}`, row.tipo, sc)
-    addCell(ws, `F${r}`, row.conTP, sc)
-    addCell(ws, `G${r}`, formatDateDisplay(row.fechaPrimerControl), sc)
-    addCell(ws, `H${r}`, row.controlPostParto, s)
-    addCell(ws, `I${r}`, row.signosSintomasIAAS || '', row.signosSintomasIAAS === 'SI' ? badgeYes : badgeNo)
-    addCell(ws, `J${r}`, row.dias30, sc)
-    addCell(ws, `K${r}`, row.observaciones, s)
-  })
-
-  ws['!ref'] = `A1:K${data.length + 3}`
-  setColWidths(ws, [11, 30, 14, 16, 16, 10, 14, 30, 10, 10, 30])
-
-  return ws
+  return buildSheet(data, partosConfig(anio))
 }
 
 export function exportPartos(data: PartoCesarea[], anio: number) {
   const wb = XLSX.utils.book_new()
-  const ws = buildPartosSheet(data, anio)
-  XLSX.utils.book_append_sheet(wb, ws, 'Partos-Cesárea (EP)')
+  XLSX.utils.book_append_sheet(wb, buildPartosSheet(data, anio), 'Partos-Cesárea (EP)')
   saveWorkbook(wb, `Partos_Cesarea_EP_${anio}.xlsx`)
 }
