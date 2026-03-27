@@ -25,7 +25,7 @@ export function ConfirmDialog({
   const isDanger = variant === 'danger'
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" data-testid="confirm-dialog">
       <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in">
         <div className="flex items-start gap-4">
@@ -52,6 +52,7 @@ export function ConfirmDialog({
           </button>
           <button
             onClick={onConfirm}
+            data-testid="btn-confirm"
             className={`px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors ${
               isDanger
                 ? 'bg-red-600 hover:bg-red-700'

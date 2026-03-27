@@ -14,6 +14,7 @@ export default function FormActions({ onCancel, isEditing, submitLabel, loading 
         onClick={onCancel}
         disabled={loading}
         className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        data-testid="btn-cancel"
       >
         Cancelar
       </button>
@@ -21,6 +22,7 @@ export default function FormActions({ onCancel, isEditing, submitLabel, loading 
         type="submit"
         disabled={loading}
         className="px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+        data-testid="btn-submit"
       >
         {loading && (
           <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">

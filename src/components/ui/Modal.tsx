@@ -61,7 +61,7 @@ export default function Modal({ open, onClose, title, children, wide }: ModalPro
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4" role="dialog" aria-modal="true" aria-labelledby={titleId} data-testid="modal">
       <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={dialogRef}

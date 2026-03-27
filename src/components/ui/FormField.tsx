@@ -1,4 +1,4 @@
-import { ReactNode, useId } from 'react'
+import { ReactNode, useId, cloneElement, isValidElement } from 'react'
 
 interface FormFieldProps {
   label: string
@@ -13,17 +13,24 @@ interface FormFieldProps {
 /**
  * Consistent form field wrapper with label, optional required indicator,
  * and validation error display with proper ARIA attributes.
+ * Automatically links label ↔ input via generated id for accessibility.
  */
 export default function FormField({ label, children, className = '', error, required }: FormFieldProps) {
+  const fieldId = useId()
   const errorId = useId()
+
+  // Inject id into the child input/select/textarea so label[htmlFor] works
+  const child = isValidElement<{ id?: string }>(children)
+    ? cloneElement(children, { id: children.props.id ?? fieldId })
+    : children
 
   return (
     <div className={className} {...(error ? { 'aria-describedby': errorId } : {})}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700 mb-1">
         {label}
         {required && <span className="text-red-400 ml-0.5" aria-hidden="true">*</span>}
       </label>
-      {children}
+      {child}
       {error && <p id={errorId} className="text-xs text-red-500 mt-1" role="alert">{error}</p>}
     </div>
   )

@@ -50,7 +50,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { role } = useAuth()
 
   return (
-    <aside className={`${collapsed ? 'w-[72px]' : 'w-64'} bg-gradient-to-b from-primary-900 to-primary-950 text-white min-h-screen flex flex-col flex-shrink-0 transition-[width] duration-200`}>
+    <aside data-testid="sidebar" className={`${collapsed ? 'w-[72px]' : 'w-64'} bg-gradient-to-b from-primary-900 to-primary-950 text-white min-h-screen flex flex-col flex-shrink-0 transition-[width] duration-200`}>
       <div className={`p-5 pb-4 ${collapsed ? 'px-3' : ''}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">

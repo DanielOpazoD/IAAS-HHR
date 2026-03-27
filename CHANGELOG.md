@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.1.0] - 2026-03-27
+
+### Added
+- Multi-user role system (admin, pabellón, matronas) with per-collection write permissions
+- Audit trail: `createdBy`/`updatedBy` uid stamps on all CRUD operations
+- Admin user management page (`/admin/users`) with role assignment
+- PendingApprovalPage for users without assigned role
+- UserService for profile CRUD (Firebase + localStorage dual mode)
+- E2E tests with Playwright — 18 tests covering navigation, CRUD flow, dashboard
+- `data-testid` attributes on key UI components for E2E testability
+- Proper `htmlFor`/`id` label-input association in FormField (accessibility)
+
+### Changed
+- AuthContext expanded with `role`, `canWrite()`, user profile management
+- useCollection enforces write permissions by role, injects audit trail fields
+- GenericDataPage hides add/edit/delete when user lacks write permission
+- Sidebar shows "Usuarios" link only for admin role
+- FormField now uses `cloneElement` to inject `id` for label association
+
+### Improved
+- 103 unit tests + 18 E2E tests passing
+- Full CRUD E2E coverage: create, edit, delete, cancel, escape-close
+- Accessibility: labels properly linked to inputs via htmlFor
+
 ## [2.0.0] - 2026-03-26
 
 ### Added
