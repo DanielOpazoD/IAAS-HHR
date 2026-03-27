@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, AgenteRiesgoEpidemico, RegistroIAAS } from '@/types'
@@ -43,23 +44,26 @@ export default function DashboardPage() {
   const { data: arepi } = useCollection<AgenteRiesgoEpidemico>('arepi', anio)
   const { data: iaas } = useCollection<RegistroIAAS>('registroIaas', anio)
 
-  const ihoCount = cirugias.filter((c) => c.iho === 'SI').length
-  const iaasPartos = partos.filter((p) => p.signosSintomasIAAS === 'SI').length
-  const fallecidos = iaas.filter((r) => r.fallecido === 'SI').length
-  const totalRegistros = cirugias.length + partos.length + dip.length + arepi.length + iaas.length
+  const { ihoCount, iaasPartos, fallecidos, totalRegistros, monthlyData, maxMonthly } = useMemo(() => {
+    const iho = cirugias.filter((c) => c.iho === 'SI').length
+    const iaasP = partos.filter((p) => p.signosSintomasIAAS === 'SI').length
+    const fall = iaas.filter((r) => r.fallecido === 'SI').length
+    const total = cirugias.length + partos.length + dip.length + arepi.length + iaas.length
+
+    const monthly = MESES.map((mes, i) => ({
+      label: MESES_CORTOS[i],
+      value: cirugias.filter((c) => c.mes === mes).length
+        + partos.filter((p) => p.mes === mes).length
+        + dip.filter((d) => d.mes === mes).length,
+    }))
+    const maxM = Math.max(...monthly.map((m) => m.value), 1)
+
+    return { ihoCount: iho, iaasPartos: iaasP, fallecidos: fall, totalRegistros: total, monthlyData: monthly, maxMonthly: maxM }
+  }, [cirugias, partos, dip, arepi, iaas])
 
   const handleExportAll = () => {
     exportFullWorkbook({ cirugias, partos, dip, arepi, registroIaas: iaas }, anio)
   }
-
-  // Monthly distribution
-  const monthlyData = MESES.map((mes, i) => ({
-    label: MESES_CORTOS[i],
-    value: cirugias.filter((c) => c.mes === mes).length
-      + partos.filter((p) => p.mes === mes).length
-      + dip.filter((d) => d.mes === mes).length,
-  }))
-  const maxMonthly = Math.max(...monthlyData.map((m) => m.value), 1)
 
   return (
     <div className="space-y-6">

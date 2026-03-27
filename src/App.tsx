@@ -1,18 +1,32 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
+import { ToastProvider } from '@/context/ToastContext'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import AppLayout from '@/components/layout/AppLayout'
 import LoginPage from '@/components/auth/LoginPage'
-import DashboardPage from '@/pages/DashboardPage'
-import CirugiasPage from '@/pages/CirugiasPage'
-import PartosPage from '@/pages/PartosPage'
-import DipPage from '@/pages/DipPage'
-import ArepiPage from '@/pages/ArepiPage'
-import RegistroIaasPage from '@/pages/RegistroIaasPage'
-import ConsolidacionPage from '@/pages/ConsolidacionPage'
-import ImportPage from '@/pages/ImportPage'
 import { getCurrentYear } from '@/utils/dates'
+
+// Lazy-loaded pages (code-split per route)
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const CirugiasPage = lazy(() => import('@/pages/CirugiasPage'))
+const PartosPage = lazy(() => import('@/pages/PartosPage'))
+const DipPage = lazy(() => import('@/pages/DipPage'))
+const ArepiPage = lazy(() => import('@/pages/ArepiPage'))
+const RegistroIaasPage = lazy(() => import('@/pages/RegistroIaasPage'))
+const ConsolidacionPage = lazy(() => import('@/pages/ConsolidacionPage'))
+const ImportPage = lazy(() => import('@/pages/ImportPage'))
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <div className="w-6 h-6 border-3 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <p className="text-xs text-gray-400">Cargando módulo...</p>
+      </div>
+    </div>
+  )
+}
 
 function ProtectedApp() {
   const { user, loading } = useAuth()
@@ -32,19 +46,21 @@ function ProtectedApp() {
   if (!user) return <LoginPage />
 
   return (
-    <Routes>
-      <Route element={<AppLayout anio={anio} onAnioChange={setAnio} />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="cirugias" element={<CirugiasPage />} />
-        <Route path="partos" element={<PartosPage />} />
-        <Route path="dip" element={<DipPage />} />
-        <Route path="arepi" element={<ArepiPage />} />
-        <Route path="registro-iaas" element={<RegistroIaasPage />} />
-        <Route path="consolidacion" element={<ConsolidacionPage />} />
-        <Route path="importar" element={<ImportPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route element={<AppLayout anio={anio} onAnioChange={setAnio} />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="cirugias" element={<CirugiasPage />} />
+          <Route path="partos" element={<PartosPage />} />
+          <Route path="dip" element={<DipPage />} />
+          <Route path="arepi" element={<ArepiPage />} />
+          <Route path="registro-iaas" element={<RegistroIaasPage />} />
+          <Route path="consolidacion" element={<ConsolidacionPage />} />
+          <Route path="importar" element={<ImportPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </Suspense>
   )
 }
 
@@ -53,7 +69,9 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <ProtectedApp />
+          <ToastProvider>
+            <ProtectedApp />
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

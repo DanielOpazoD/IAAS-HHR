@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { PartoCesarea } from '@/types'
 import { TIPOS_PARTO } from '@/utils/constants'
-import { formatRut } from '@/utils/rut'
+import { formatRut, validateRut } from '@/utils/rut'
 import { getMesFromDate } from '@/utils/dates'
 import { useFormState } from '@/hooks/useFormState'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
@@ -22,6 +22,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
     tipo: TIPOS_PARTO[0], conTP: '', fechaPrimerControl: '',
     controlPostParto: '', signosSintomasIAAS: 'NO', dias30: '', observaciones: '',
   })
+  const [rutError, setRutError] = useState('')
 
   useEffect(() => {
     if (form.fechaParto) {
@@ -30,14 +31,33 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
     }
   }, [form.fechaParto])
 
+  const handleRutChange = (value: string) => {
+    const formatted = formatRut(value)
+    set('rut', formatted)
+    if (formatted.length >= 3) {
+      setRutError(validateRut(formatted) ? '' : 'RUT inválido')
+    } else {
+      setRutError('')
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (form.rut && !validateRut(form.rut)) {
+      setRutError('RUT inválido')
+      return
+    }
+    onSubmit(form)
+  }
+
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Nombre del Paciente">
+        <FormField label="Nombre del Paciente" required>
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
         </FormField>
-        <FormField label="RUT">
-          <Input value={form.rut} onChange={(e) => set('rut', formatRut(e.target.value))} placeholder="12.345.678-9" required />
+        <FormField label="RUT" required error={rutError}>
+          <Input value={form.rut} onChange={(e) => handleRutChange(e.target.value)} placeholder="12.345.678-9" required />
         </FormField>
       </div>
       <div className="grid grid-cols-3 gap-4">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo } from '@/types'
@@ -99,9 +99,12 @@ export default function ConsolidacionPage() {
   const { data: dip } = useCollection<DispositivoInvasivo>('dip', anio)
   const { data: consolidacion, add: addConsolidacion, update: updateConsolidacion } = useCol<DatosConsolidacion>('consolidacion', anio)
 
-  const manualData = consolidacion.find((c) => c.cuatrimestre === cuatrimestre)
+  const manualData = useMemo(
+    () => consolidacion.find((c) => c.cuatrimestre === cuatrimestre),
+    [consolidacion, cuatrimestre]
+  )
 
-  const getDipData = (indId: string, mes: string) => {
+  const getDipData = useCallback((indId: string, mes: string) => {
     const manual = manualData?.dipData?.[indId]?.[mes]
     if (manual) return { infecciones: manual.infecciones, denominador: manual.diasExposicion }
 
@@ -112,15 +115,15 @@ export default function ConsolidacionPage() {
       infecciones: 0,
       denominador: mesDip.reduce((sum, d) => sum + (d.totalDias || 0), 0),
     }
-  }
+  }, [manualData, dip])
 
-  const getArepiData = (indId: string, mes: string) => {
+  const getArepiData = useCallback((indId: string, mes: string) => {
     const manual = manualData?.arepiData?.[indId]?.[mes]
     if (manual) return { infecciones: manual.infecciones, denominador: manual.diasExposicion }
     return { infecciones: 0, denominador: 0 }
-  }
+  }, [manualData])
 
-  const getCxPartosData = (indId: string, mes: string) => {
+  const getCxPartosData = useCallback((indId: string, mes: string) => {
     const manual = manualData?.cxPartosData?.[indId]?.[mes]
     if (manual) return { infecciones: manual.infecciones, denominador: manual.procedimientosVigilados }
 
@@ -153,7 +156,7 @@ export default function ConsolidacionPage() {
       return { infecciones: p.filter((pt) => pt.signosSintomasIAAS === 'SI').length, denominador: p.length }
     }
     return { infecciones: 0, denominador: 0 }
-  }
+  }, [manualData, cirugias, partos])
 
   return (
     <div>

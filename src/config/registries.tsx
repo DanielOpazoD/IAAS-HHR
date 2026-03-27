@@ -30,6 +30,12 @@ export interface FormComponentProps<T> {
 
 // ── Registry configuration ──
 
+export interface FilterDef {
+  key: string
+  label: string
+  options: readonly string[]
+}
+
 export interface RegistryConfig<T extends BaseRecord> {
   collectionName: string
   title: string
@@ -41,6 +47,8 @@ export interface RegistryConfig<T extends BaseRecord> {
   wideModal?: boolean
   hasMonthFilter?: boolean
   filterKey?: string
+  /** Additional filter (e.g. surgery type) */
+  secondaryFilter?: FilterDef
   getNextNumero?: (data: (T & { id: string })[]) => number
 }
 
@@ -66,6 +74,7 @@ function Badge({ value, positiveColor = 'red' }: { value: string; positiveColor?
 
 import CirugiaForm from '@/components/forms/CirugiaForm'
 import { exportCirugias } from '@/services/excel/cirugiasExport'
+import { TIPOS_CIRUGIA } from '@/utils/constants'
 
 export const cirugiaConfig: RegistryConfig<CirugiaTrazadora> = {
   collectionName: 'cirugias',
@@ -74,6 +83,7 @@ export const cirugiaConfig: RegistryConfig<CirugiaTrazadora> = {
   entityName: { singular: 'Cirugía', plural: 'cirugías' },
   hasMonthFilter: true,
   filterKey: 'mes',
+  secondaryFilter: { key: 'tipoCirugia', label: 'Tipo de cirugía', options: TIPOS_CIRUGIA },
   FormComponent: CirugiaForm,
   exportFn: exportCirugias,
   columns: [

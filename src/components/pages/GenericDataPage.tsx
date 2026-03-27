@@ -6,6 +6,7 @@ import PageHeader from '@/components/layout/PageHeader'
 import DataTable from '@/components/ui/DataTable'
 import Modal from '@/components/ui/Modal'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
+import { useToastContext } from '@/context/ToastContext'
 import type { BaseRecord } from '@/types'
 import type { RegistryConfig } from '@/config/registries'
 
@@ -21,23 +22,33 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<(T & { id: string }) | undefined>()
   const [filterMes, setFilterMes] = useState('')
+  const [filterSecondary, setFilterSecondary] = useState('')
   const { confirm, ConfirmDialog } = useConfirm()
+  const { addToast } = useToastContext()
 
-  const filtered =
-    config.hasMonthFilter && filterMes
-      ? data.filter((d) => (d as Record<string, unknown>)[config.filterKey || 'mes'] === filterMes)
-      : data
+  const filtered = data.filter((d) => {
+    const rec = d as Record<string, unknown>
+    if (config.hasMonthFilter && filterMes && rec[config.filterKey || 'mes'] !== filterMes) return false
+    if (config.secondaryFilter && filterSecondary && rec[config.secondaryFilter.key] !== filterSecondary) return false
+    return true
+  })
 
   const nextNumero = config.getNextNumero?.(data)
 
   const handleSubmit = async (formData: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (editing?.id) {
-      await update(editing.id, formData)
-    } else {
-      await add(formData as T)
+    try {
+      if (editing?.id) {
+        await update(editing.id, formData)
+        addToast(`${config.entityName.singular} actualizado correctamente`, 'success')
+      } else {
+        await add(formData as T)
+        addToast(`${config.entityName.singular} guardado correctamente`, 'success')
+      }
+      setModalOpen(false)
+      setEditing(undefined)
+    } catch {
+      addToast(`Error al guardar ${config.entityName.singular.toLowerCase()}`, 'error')
     }
-    setModalOpen(false)
-    setEditing(undefined)
   }
 
   const handleEdit = (item: T & { id: string }) => {
@@ -51,7 +62,12 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       variant: 'danger',
     })
     if (ok && item.id) {
-      await remove(item.id)
+      try {
+        await remove(item.id)
+        addToast('Registro eliminado', 'info')
+      } catch {
+        addToast('Error al eliminar registro', 'error')
+      }
     }
   }
 
@@ -82,16 +98,33 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         onExport={() => config.exportFn(filtered, anio)}
       />
 
-      {config.hasMonthFilter && (
-        <div className="mb-4">
-          <select
-            value={filterMes}
-            onChange={(e) => setFilterMes(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-          >
-            <option value="">Todos los meses</option>
-            {MESES.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
+      {(config.hasMonthFilter || config.secondaryFilter) && (
+        <div className="mb-4 flex items-center gap-3">
+          {config.hasMonthFilter && (
+            <select
+              value={filterMes}
+              onChange={(e) => setFilterMes(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+            >
+              <option value="">Todos los meses</option>
+              {MESES.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          )}
+          {config.secondaryFilter && (
+            <select
+              value={filterSecondary}
+              onChange={(e) => setFilterSecondary(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+            >
+              <option value="">{`Todos: ${config.secondaryFilter.label}`}</option>
+              {config.secondaryFilter.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          )}
+          {(filterMes || filterSecondary) && (
+            <span className="text-xs text-gray-500">
+              {filtered.length} de {data.length} registros
+            </span>
+          )}
         </div>
       )}
 
