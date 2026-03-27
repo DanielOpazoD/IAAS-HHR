@@ -47,6 +47,10 @@ export default function ImportPage() {
     reader.readAsArrayBuffer(file)
   }, [])
 
+  const total = result
+    ? result.cirugias.length + result.partos.length + result.dip.length + result.arepi.length + result.registroIaas.length
+    : 0
+
   const handleImport = async () => {
     if (!result) return
     setImporting(true)
@@ -103,10 +107,6 @@ export default function ImportPage() {
       setImporting(false)
     }
   }
-
-  const total = result
-    ? result.cirugias.length + result.partos.length + result.dip.length + result.arepi.length + result.registroIaas.length
-    : 0
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -241,8 +241,8 @@ function PreviewCard({ label, count, color }: { label: string; count: number; co
   )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function DetailSection({ title, items, columns, headers }: { title: string; items: readonly any[]; columns: string[]; headers: string[] }) {
+// Items typed loosely to accept any registry interface (TS interfaces lack index signatures)
+function DetailSection<T extends object>({ title, items, columns, headers }: { title: string; items: readonly T[]; columns: string[]; headers: string[] }) {
   const [expanded, setExpanded] = useState(false)
   const shown = expanded ? items : items.slice(0, 5)
 
@@ -267,7 +267,7 @@ function DetailSection({ title, items, columns, headers }: { title: string; item
             {shown.map((item, i) => (
               <tr key={i} className="border-t border-gray-100">
                 {columns.map((col) => (
-                  <td key={col} className="px-3 py-1.5 text-gray-700">{String(item[col] ?? '')}</td>
+                  <td key={col} className="px-3 py-1.5 text-gray-700">{String((item as Record<string, unknown>)[col] ?? '')}</td>
                 ))}
               </tr>
             ))}

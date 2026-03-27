@@ -2,11 +2,9 @@ import { useState, useMemo, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { useToastContext } from '@/context/ToastContext'
-import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo } from '@/types'
+import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, DatosConsolidacion } from '@/types'
 import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
 import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '@/utils/rates'
-import { DatosConsolidacion } from '@/types'
-import { useCollection as useCol } from '@/hooks/useCollection'
 import { exportConsolidacion } from '@/services/excel/consolidacionExport'
 
 function RateTable({
@@ -98,7 +96,7 @@ export default function ConsolidacionPage() {
   const { data: cirugias } = useCollection<CirugiaTrazadora>('cirugias', anio)
   const { data: partos } = useCollection<PartoCesarea>('partos', anio)
   const { data: dip } = useCollection<DispositivoInvasivo>('dip', anio)
-  const { data: consolidacion, add: addConsolidacion, update: updateConsolidacion } = useCol<DatosConsolidacion>('consolidacion', anio)
+  const { data: consolidacion } = useCollection<DatosConsolidacion>('consolidacion', anio)
 
   const manualData = useMemo(
     () => consolidacion.find((c) => c.cuatrimestre === cuatrimestre),

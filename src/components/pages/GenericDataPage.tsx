@@ -15,6 +15,7 @@ import type { RegistryConfig } from '@/config/registries'
  * Generic CRUD page component. Replaces 5 near-identical page files
  * with a single reusable component driven by a RegistryConfig.
  */
+// `any` required: TS interfaces lack index signatures needed by Record<string, unknown>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function GenericDataPage({ config }: { config: RegistryConfig<any> }) {
   type T = Record<string, unknown>
