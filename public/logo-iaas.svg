@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC107"/>
+      <stop offset="100%" stop-color="#F5A623"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer circle -->
+  <circle cx="100" cy="100" r="90" fill="none" stroke="url(#g1)" stroke-width="18"/>
+  <!-- Left kidney shape -->
+  <path d="M62,60 C42,60 32,80 38,100 C44,120 56,125 62,125 C68,125 74,118 74,108 C74,98 68,92 62,92 C56,92 52,96 52,102" fill="none" stroke="url(#g1)" stroke-width="14" stroke-linecap="round"/>
+  <!-- Right kidney shape -->
+  <path d="M138,60 C158,60 168,80 162,100 C156,120 144,125 138,125 C132,125 126,118 126,108 C126,98 132,92 138,92 C144,92 148,96 148,102" fill="none" stroke="url(#g1)" stroke-width="14" stroke-linecap="round"/>
+  <!-- Central drop -->
+  <path d="M100,120 C100,120 88,140 88,152 C88,160 93,168 100,168 C107,168 112,160 112,152 C112,140 100,120 100,120 Z" fill="url(#g1)"/>
+</svg>
