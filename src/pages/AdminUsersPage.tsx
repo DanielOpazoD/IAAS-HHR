@@ -27,8 +27,11 @@ export default function AdminUsersPage() {
     userService.getAllUsers().then((u) => {
       setUsers(u)
       setLoading(false)
-    }).catch(() => setLoading(false))
-  }, [role, navigate])
+    }).catch((err) => {
+      addToast(`Error al cargar usuarios: ${getErrorMessage(err)}`, 'error')
+      setLoading(false)
+    })
+  }, [role, navigate, addToast])
 
   const handleRoleChange = async (uid: string, newRole: UserRole) => {
     try {

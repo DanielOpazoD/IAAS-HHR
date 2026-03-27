@@ -1,8 +1,9 @@
-import { useEffect, useCallback, FormEvent } from 'react'
+import { useCallback, FormEvent } from 'react'
 import { RegistroIAAS } from '@/types'
-import { getMesFromDate } from '@/utils/dates'
 import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
+import { useAutoMonth } from '@/hooks/useAutoMonth'
+import { useFormChangeNotify } from '@/hooks/useFormChangeNotify'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
 import FormActions from '@/components/ui/FormActions'
 
@@ -30,16 +31,9 @@ export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubm
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
 
-  useEffect(() => {
-    if (form.fechaIngreso) {
-      const mes = getMesFromDate(form.fechaIngreso)
-      if (mes !== form.mes) set('mes', mes)
-    }
-  }, [form.fechaIngreso, form.mes, set])
-
-  useEffect(() => {
-    onFormChange?.({ rut: form.rut, mes: form.mes })
-  }, [form.rut, form.mes, onFormChange])
+  const setMes = useCallback((m: string) => set('mes', m), [set])
+  useAutoMonth(form.fechaIngreso, form.mes, setMes)
+  useFormChangeNotify({ rut: form.rut, mes: form.mes }, onFormChange)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()

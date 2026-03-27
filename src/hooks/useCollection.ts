@@ -3,24 +3,9 @@ import { where, orderBy, QueryConstraint } from 'firebase/firestore'
 import * as firestoreService from '@/services/firestore'
 import { isFirebaseConfigured } from '@/config/firebase'
 import { getErrorMessage } from '@/utils/errors'
+import { getLocalKey, loadLocal, saveLocal } from '@/utils/localStorage'
 import { useAuth } from '@/context/AuthContext'
 import { ROLE_PERMISSIONS } from '@/types/roles'
-
-function getLocalKey(collectionName: string, anio?: number) {
-  return anio ? `iaas_${collectionName}_${anio}` : `iaas_${collectionName}`
-}
-
-function loadLocal<T>(key: string): (T & { id: string })[] {
-  try {
-    return JSON.parse(localStorage.getItem(key) || '[]')
-  } catch {
-    return []
-  }
-}
-
-function saveLocal<T>(key: string, data: T[]) {
-  localStorage.setItem(key, JSON.stringify(data))
-}
 
 /**
  * Generic CRUD hook with dual-mode support:

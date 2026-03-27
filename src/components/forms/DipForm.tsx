@@ -3,6 +3,7 @@ import { DispositivoInvasivo, PeriodoDIP } from '@/types'
 import { TIPOS_DIP, SERVICIOS, MESES } from '@/utils/constants'
 import { getMesFromDate, calcDaysBetween } from '@/utils/dates'
 import { useRutField } from '@/hooks/useRutField'
+import { useFormChangeNotify } from '@/hooks/useFormChangeNotify'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
 import FormActions from '@/components/ui/FormActions'
 
@@ -82,9 +83,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel, loading, on
     if (form.periodos.length > 1) setForm((f) => ({ ...f, periodos: f.periodos.filter((_, i) => i !== idx) }))
   }
 
-  useEffect(() => {
-    onFormChange?.({ rut: form.rut, mes: form.mes })
-  }, [form.rut, form.mes, onFormChange])
+  useFormChangeNotify({ rut: form.rut, mes: form.mes }, onFormChange)
 
   /** Validate that no period has fechaRetiro before fechaInstalacion */
   const dateErrors = useMemo(() => {

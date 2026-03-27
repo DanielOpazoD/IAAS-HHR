@@ -4,8 +4,6 @@ import { saveAs } from 'file-saver'
 // ── Color palette ──
 const TEAL_DARK = '0C5C6F'
 const TEAL_MID = '0E7490'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const TEAL_LIGHT = 'E0F7FA' // reserved for future use
 const GRAY_BORDER = 'CBD5E1'
 const GRAY_LIGHT = 'F1F5F9'
 const WHITE = 'FFFFFF'

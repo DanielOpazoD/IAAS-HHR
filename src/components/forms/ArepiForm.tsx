@@ -1,8 +1,9 @@
-import { useCallback, useEffect, FormEvent } from 'react'
+import { useCallback, FormEvent } from 'react'
 import { AgenteRiesgoEpidemico } from '@/types'
 import { SERVICIOS } from '@/utils/constants'
 import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
+import { useFormChangeNotify } from '@/hooks/useFormChangeNotify'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
 import FormActions from '@/components/ui/FormActions'
 
@@ -26,9 +27,7 @@ export default function ArepiForm({ initial, anio, onSubmit, onCancel, loading, 
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
 
-  useEffect(() => {
-    onFormChange?.({ rut: form.rut })
-  }, [form.rut, onFormChange])
+  useFormChangeNotify({ rut: form.rut }, onFormChange)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()

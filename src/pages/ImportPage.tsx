@@ -4,19 +4,8 @@ import { parseExcelFile, ImportResult } from '@/services/excel/excelImport'
 import { isFirebaseConfigured } from '@/config/firebase'
 import { useToastContext } from '@/context/ToastContext'
 import { getErrorMessage } from '@/utils/errors'
+import { getLocalKey, loadLocal, saveLocal } from '@/utils/localStorage'
 import * as firestoreService from '@/services/firestore'
-
-function getLocalKey(collection: string, anio: number) {
-  return `iaas_${collection}_${anio}`
-}
-
-function loadLocal<T>(key: string): (T & { id: string })[] {
-  try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] }
-}
-
-function saveLocal<T>(key: string, data: T[]) {
-  localStorage.setItem(key, JSON.stringify(data))
-}
 
 export default function ImportPage() {
   const navigate = useNavigate()

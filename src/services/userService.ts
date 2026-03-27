@@ -1,18 +1,15 @@
 import { isFirebaseConfigured, db } from '@/config/firebase'
+import { getLocalKey, loadLocal, saveLocal } from '@/utils/localStorage'
 import type { UserProfile, UserRole } from '@/types/roles'
 
-const LOCAL_KEY = 'iaas_users'
+const LOCAL_KEY = getLocalKey('users')
 
 function loadLocalUsers(): UserProfile[] {
-  try {
-    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]')
-  } catch {
-    return []
-  }
+  return loadLocal<UserProfile>(LOCAL_KEY) as UserProfile[]
 }
 
-function saveLocalUsers(users: UserProfile[]) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(users))
+function saveLocalUsers(users: UserProfile[]): void {
+  saveLocal(LOCAL_KEY, users)
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
