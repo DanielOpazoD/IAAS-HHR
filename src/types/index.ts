@@ -1,12 +1,14 @@
 import { Timestamp } from 'firebase/firestore'
 
+/** Base fields shared by all records (audit trail) */
 export interface BaseRecord {
   id?: string
-  createdAt?: Timestamp
-  updatedAt?: Timestamp
+  createdAt?: Timestamp | string
+  updatedAt?: Timestamp | string
   createdBy?: string
 }
 
+/** Cirugías Trazadoras - Tracer surgery tracking */
 export interface CirugiaTrazadora extends BaseRecord {
   mes: string
   anio: number
@@ -21,6 +23,7 @@ export interface CirugiaTrazadora extends BaseRecord {
   observaciones2: string
 }
 
+/** Partos/Cesárea - Puerperal endometritis tracking */
 export interface PartoCesarea extends BaseRecord {
   mes: string
   anio: number
@@ -36,12 +39,14 @@ export interface PartoCesarea extends BaseRecord {
   observaciones: string
 }
 
+/** Single installation/removal period for an invasive device */
 export interface PeriodoDIP {
   fechaInstalacion: string
   fechaRetiro: string
   numDias: number | null
 }
 
+/** DIP - Permanent Invasive Devices (CVC, CUP, VMI) */
 export interface DispositivoInvasivo extends BaseRecord {
   mes: string
   anio: number
@@ -55,6 +60,7 @@ export interface DispositivoInvasivo extends BaseRecord {
   revisionFC: string
 }
 
+/** AREpi - Epidemic Risk Agents */
 export interface AgenteRiesgoEpidemico extends BaseRecord {
   fechaVE: string
   anio: number
@@ -66,6 +72,7 @@ export interface AgenteRiesgoEpidemico extends BaseRecord {
   criteriosEpidemiologicos: string
 }
 
+/** Master IAAS infection registry */
 export interface RegistroIAAS extends BaseRecord {
   numero: number
   mes: string
@@ -88,6 +95,7 @@ export interface RegistroIAAS extends BaseRecord {
   observaciones: string
 }
 
+/** Variable indicator data (DIP / AREpi) */
 export interface IndicadorVariable {
   infecciones: number
   pacientes: number
@@ -95,6 +103,7 @@ export interface IndicadorVariable {
   tasa: number
 }
 
+/** Surgery/birth indicator data */
 export interface IndicadorCxPartos {
   infecciones: number
   procedimientosVigilados: number
@@ -102,6 +111,7 @@ export interface IndicadorCxPartos {
   tasa: number
 }
 
+/** Consolidation data by cuatrimestre */
 export interface DatosConsolidacion extends BaseRecord {
   anio: number
   cuatrimestre: number

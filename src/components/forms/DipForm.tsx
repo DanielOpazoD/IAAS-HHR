@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react'
-import { DispositivoInvasivo, PeriodoDIP } from '../../types'
-import { TIPOS_DIP, SERVICIOS, MESES } from '../../utils/constants'
-import { formatRut } from '../../utils/rut'
-import { getMesFromDate, calcDaysBetween } from '../../utils/dates'
-import FormField, { Input, Select, Textarea } from '../ui/FormField'
+import { DispositivoInvasivo, PeriodoDIP } from '@/types'
+import { TIPOS_DIP, SERVICIOS, MESES } from '@/utils/constants'
+import { formatRut } from '@/utils/rut'
+import { getMesFromDate, calcDaysBetween } from '@/utils/dates'
+import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
+import FormActions from '@/components/ui/FormActions'
 
-interface DipFormProps {
+type FormData = Omit<DispositivoInvasivo, 'id' | 'createdAt' | 'updatedAt'>
+
+interface Props {
   initial?: DispositivoInvasivo
   anio: number
-  onSubmit: (data: Omit<DispositivoInvasivo, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onSubmit: (data: FormData) => void
   onCancel: () => void
 }
 
 const emptyPeriodo: PeriodoDIP = { fechaInstalacion: '', fechaRetiro: '', numDias: null }
 
-export default function DipForm({ initial, anio, onSubmit, onCancel }: DipFormProps) {
-  const [form, setForm] = useState({
+export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
+  const [form, setForm] = useState<FormData>({
     mes: initial?.mes || '',
     anio: initial?.anio || anio,
     servicio: initial?.servicio || SERVICIOS[0],
@@ -27,6 +30,8 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: DipFormPr
     totalDias: initial?.totalDias || 0,
     revisionFC: initial?.revisionFC || '',
   })
+
+  const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }))
 
   useEffect(() => {
     const periodos = form.periodos.map((p) => ({
@@ -44,8 +49,6 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: DipFormPr
     }
   }, [form.periodos[0]?.fechaInstalacion])
 
-  const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }))
-
   const setPeriodo = (idx: number, key: keyof PeriodoDIP, value: string) => {
     setForm((f) => {
       const periodos = [...f.periodos]
@@ -55,24 +58,15 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: DipFormPr
   }
 
   const addPeriodo = () => {
-    if (form.periodos.length < 4) {
-      setForm((f) => ({ ...f, periodos: [...f.periodos, { ...emptyPeriodo }] }))
-    }
+    if (form.periodos.length < 4) setForm((f) => ({ ...f, periodos: [...f.periodos, { ...emptyPeriodo }] }))
   }
 
   const removePeriodo = (idx: number) => {
-    if (form.periodos.length > 1) {
-      setForm((f) => ({ ...f, periodos: f.periodos.filter((_, i) => i !== idx) }))
-    }
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(form as Omit<DispositivoInvasivo, 'id' | 'createdAt' | 'updatedAt'>)
+    if (form.periodos.length > 1) setForm((f) => ({ ...f, periodos: f.periodos.filter((_, i) => i !== idx) }))
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Nombre del Paciente">
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
@@ -123,7 +117,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: DipFormPr
             </FormField>
             <div className="flex items-end pb-0.5">
               {form.periodos.length > 1 && (
-                <button type="button" onClick={() => removePeriodo(idx)} className="p-2 text-red-400 hover:text-red-600">
+                <button type="button" onClick={() => removePeriodo(idx)} className="p-2 text-red-400 hover:text-red-600" aria-label="Eliminar período">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -138,10 +132,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: DipFormPr
       <FormField label="Revisión Ficha Clínica">
         <Textarea value={form.revisionFC} onChange={(e) => set('revisionFC', e.target.value)} rows={2} />
       </FormField>
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-        <button type="submit" className="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700">{initial?.id ? 'Actualizar' : 'Guardar'}</button>
-      </div>
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
     </form>
   )
 }

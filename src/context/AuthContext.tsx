@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User } from 'firebase/auth'
-import { isFirebaseConfigured, getFirebaseAuth } from '../config/firebase'
+import { isFirebaseConfigured, getFirebaseAuth } from '@/config/firebase'
 
 interface AuthContextType {
   user: User | null
@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     const authInstance = await getFirebaseAuth()
+    if (!authInstance) return
     const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth')
     await signInWithPopup(authInstance, new GoogleAuthProvider())
   }
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     const authInstance = await getFirebaseAuth()
+    if (!authInstance) return
     const { signOut: fbSignOut } = await import('firebase/auth')
     await fbSignOut(authInstance)
   }

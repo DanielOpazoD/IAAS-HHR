@@ -1,49 +1,37 @@
-import { useState, useEffect } from 'react'
-import { PartoCesarea } from '../../types'
-import { TIPOS_PARTO, MESES } from '../../utils/constants'
-import { formatRut } from '../../utils/rut'
-import { getMesFromDate } from '../../utils/dates'
-import FormField, { Input, Select, Textarea } from '../ui/FormField'
+import { useEffect } from 'react'
+import { PartoCesarea } from '@/types'
+import { TIPOS_PARTO } from '@/utils/constants'
+import { formatRut } from '@/utils/rut'
+import { getMesFromDate } from '@/utils/dates'
+import { useFormState } from '@/hooks/useFormState'
+import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
+import FormActions from '@/components/ui/FormActions'
 
-interface PartoFormProps {
+type FormData = Omit<PartoCesarea, 'id' | 'createdAt' | 'updatedAt'>
+
+interface Props {
   initial?: PartoCesarea
   anio: number
-  onSubmit: (data: Omit<PartoCesarea, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onSubmit: (data: FormData) => void
   onCancel: () => void
 }
 
-export default function PartoForm({ initial, anio, onSubmit, onCancel }: PartoFormProps) {
-  const [form, setForm] = useState<Omit<PartoCesarea, 'id' | 'createdAt' | 'updatedAt'>>({
-    mes: initial?.mes || '',
-    anio: initial?.anio || anio,
-    nombre: initial?.nombre || '',
-    rut: initial?.rut || '',
-    fechaParto: initial?.fechaParto || '',
-    tipo: initial?.tipo || TIPOS_PARTO[0],
-    conTP: initial?.conTP || '',
-    fechaPrimerControl: initial?.fechaPrimerControl || '',
-    controlPostParto: initial?.controlPostParto || '',
-    signosSintomasIAAS: initial?.signosSintomasIAAS || 'NO',
-    dias30: initial?.dias30 || '',
-    observaciones: initial?.observaciones || '',
+export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) {
+  const { form, set } = useFormState<FormData>(initial, {
+    mes: '', anio, nombre: '', rut: '', fechaParto: '',
+    tipo: TIPOS_PARTO[0], conTP: '', fechaPrimerControl: '',
+    controlPostParto: '', signosSintomasIAAS: 'NO', dias30: '', observaciones: '',
   })
 
   useEffect(() => {
     if (form.fechaParto) {
       const mes = getMesFromDate(form.fechaParto)
-      if (mes !== form.mes) setForm((f) => ({ ...f, mes }))
+      if (mes !== form.mes) set('mes', mes)
     }
   }, [form.fechaParto])
 
-  const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }))
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(form)
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Nombre del Paciente">
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
@@ -89,10 +77,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: PartoFo
       <FormField label="Observaciones">
         <Textarea value={form.observaciones} onChange={(e) => set('observaciones', e.target.value)} rows={2} />
       </FormField>
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-        <button type="submit" className="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700">{initial?.id ? 'Actualizar' : 'Guardar'}</button>
-      </div>
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
     </form>
   )
 }

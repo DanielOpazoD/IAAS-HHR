@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { useCollection } from '../hooks/useCollection'
-import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo } from '../types'
-import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '../utils/constants'
-import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '../utils/rates'
-import { DatosConsolidacion } from '../types'
-import { useCollection as useCol } from '../hooks/useCollection'
-import { exportConsolidacion } from '../services/excel/consolidacionExport'
+import { useCollection } from '@/hooks/useCollection'
+import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo } from '@/types'
+import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
+import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '@/utils/rates'
+import { DatosConsolidacion } from '@/types'
+import { useCollection as useCol } from '@/hooks/useCollection'
+import { exportConsolidacion } from '@/services/excel/consolidacionExport'
 
 function RateTable({
   title,

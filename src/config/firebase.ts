@@ -1,6 +1,8 @@
-import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { initializeApp, FirebaseApp } from 'firebase/app'
+import { getFirestore, Firestore } from 'firebase/firestore'
+import type { Auth } from 'firebase/auth'
 
+/** True when Firebase env vars are present (false = demo/localStorage mode) */
 export const isFirebaseConfigured = !!import.meta.env.VITE_FIREBASE_API_KEY
 
 const firebaseConfig = {
@@ -12,9 +14,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:000:web:000',
 }
 
-let app: any = null
-let db: any = null
-let auth: any = null
+let app: FirebaseApp | null = null
+let db: Firestore | null = null
+let auth: Auth | null = null
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig)
@@ -23,10 +25,11 @@ if (isFirebaseConfigured) {
 
 export { app, db, auth }
 
-export async function getFirebaseAuth() {
+/** Lazy-load Firebase Auth to avoid crash without API key */
+export async function getFirebaseAuth(): Promise<Auth | null> {
   if (!isFirebaseConfigured) return null
   if (auth) return auth
   const { getAuth } = await import('firebase/auth')
-  auth = getAuth(app)
+  auth = getAuth(app!)
   return auth
 }

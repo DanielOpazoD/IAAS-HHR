@@ -10,34 +10,58 @@ const navItems = [
   { to: '/consolidacion', label: 'Consolidación Tasas', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
 ]
 
+const bottomItems = [
+  { to: '/importar', label: 'Importar Excel', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' },
+]
+
+function NavItem({ item }: { item: typeof navItems[0] }) {
+  return (
+    <NavLink
+      to={item.to}
+      end={item.to === '/'}
+      className={({ isActive }) =>
+        `flex items-center gap-3 mx-3 px-3 py-2.5 text-sm rounded-xl transition-all ${
+          isActive
+            ? 'bg-white/15 text-white font-semibold shadow-sm'
+            : 'text-primary-200 hover:bg-white/8 hover:text-white'
+        }`
+      }
+    >
+      <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+      </svg>
+      {item.label}
+    </NavLink>
+  )
+}
+
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-primary-900 text-white min-h-screen flex flex-col flex-shrink-0">
-      <div className="p-4 border-b border-primary-700">
-        <h1 className="text-lg font-bold">Hospital Hanga Roa</h1>
-        <p className="text-primary-300 text-xs mt-1">Sistema de Vigilancia IAAS</p>
-      </div>
-      <nav className="flex-1 py-4">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                isActive
-                  ? 'bg-primary-700 text-white border-r-2 border-primary-300'
-                  : 'text-primary-200 hover:bg-primary-800 hover:text-white'
-              }`
-            }
-          >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+    <aside className="w-64 bg-gradient-to-b from-primary-900 to-primary-950 text-white min-h-screen flex flex-col flex-shrink-0">
+      <div className="p-5 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+            <svg className="w-6 h-6 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>
-            {item.label}
-          </NavLink>
-        ))}
+          </div>
+          <div>
+            <h1 className="text-base font-bold tracking-tight">Hospital Hanga Roa</h1>
+            <p className="text-primary-300 text-[11px] font-medium">Vigilancia IAAS</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-5 border-t border-white/10 mb-2"></div>
+
+      <nav className="flex-1 py-1 space-y-0.5">
+        {navItems.map((item) => <NavItem key={item.to} item={item} />)}
       </nav>
+
+      <div className="mx-5 border-t border-white/10 mb-1 mt-1"></div>
+      <div className="pb-4 space-y-0.5">
+        {bottomItems.map((item) => <NavItem key={item.to} item={item} />)}
+      </div>
     </aside>
   )
 }

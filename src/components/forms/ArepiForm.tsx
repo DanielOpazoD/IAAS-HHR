@@ -1,37 +1,27 @@
-import { useState } from 'react'
-import { AgenteRiesgoEpidemico } from '../../types'
-import { SERVICIOS } from '../../utils/constants'
-import { formatRut } from '../../utils/rut'
-import FormField, { Input, Select, Textarea } from '../ui/FormField'
+import { AgenteRiesgoEpidemico } from '@/types'
+import { SERVICIOS } from '@/utils/constants'
+import { formatRut } from '@/utils/rut'
+import { useFormState } from '@/hooks/useFormState'
+import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
+import FormActions from '@/components/ui/FormActions'
 
-interface ArepiFormProps {
+type FormData = Omit<AgenteRiesgoEpidemico, 'id' | 'createdAt' | 'updatedAt'>
+
+interface Props {
   initial?: AgenteRiesgoEpidemico
   anio: number
-  onSubmit: (data: Omit<AgenteRiesgoEpidemico, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onSubmit: (data: FormData) => void
   onCancel: () => void
 }
 
-export default function ArepiForm({ initial, anio, onSubmit, onCancel }: ArepiFormProps) {
-  const [form, setForm] = useState({
-    fechaVE: initial?.fechaVE || '',
-    anio: initial?.anio || anio,
-    servicioClinico: initial?.servicioClinico || SERVICIOS[0],
-    nombre: initial?.nombre || '',
-    edad: initial?.edad || '',
-    rut: initial?.rut || '',
-    tipoVigilancia: initial?.tipoVigilancia || '',
-    criteriosEpidemiologicos: initial?.criteriosEpidemiologicos || '',
+export default function ArepiForm({ initial, anio, onSubmit, onCancel }: Props) {
+  const { form, set } = useFormState<FormData>(initial, {
+    fechaVE: '', anio, servicioClinico: SERVICIOS[0],
+    nombre: '', edad: '', rut: '', tipoVigilancia: '', criteriosEpidemiologicos: '',
   })
 
-  const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }))
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(form)
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Nombre del Paciente">
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
@@ -59,10 +49,7 @@ export default function ArepiForm({ initial, anio, onSubmit, onCancel }: ArepiFo
       <FormField label="Criterios Epidemiológicos Identificados">
         <Textarea value={form.criteriosEpidemiologicos} onChange={(e) => set('criteriosEpidemiologicos', e.target.value)} rows={3} />
       </FormField>
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-        <button type="submit" className="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700">{initial?.id ? 'Actualizar' : 'Guardar'}</button>
-      </div>
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
     </form>
   )
 }

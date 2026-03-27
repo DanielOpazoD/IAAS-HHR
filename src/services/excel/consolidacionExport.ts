@@ -1,4 +1,4 @@
-import { INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '../../utils/constants'
+import { INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
 import { XLSX, headerStyle, cellStyle, titleStyle, saveWorkbook, setColWidths, addCell, addFormulaCell } from './utils'
 
 const subHeaderStyle: XLSX.CellStyle = {

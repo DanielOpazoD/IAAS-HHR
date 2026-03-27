@@ -1,57 +1,39 @@
-import { useState, useEffect } from 'react'
-import { RegistroIAAS } from '../../types'
-import { MESES } from '../../utils/constants'
-import { formatRut } from '../../utils/rut'
-import { getMesFromDate } from '../../utils/dates'
-import FormField, { Input, Select, Textarea } from '../ui/FormField'
+import { useEffect } from 'react'
+import { RegistroIAAS } from '@/types'
+import { formatRut } from '@/utils/rut'
+import { getMesFromDate } from '@/utils/dates'
+import { useFormState } from '@/hooks/useFormState'
+import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
+import FormActions from '@/components/ui/FormActions'
 
-interface RegistroIaasFormProps {
+type FormData = Omit<RegistroIAAS, 'id' | 'createdAt' | 'updatedAt'>
+
+interface Props {
   initial?: RegistroIAAS
   anio: number
-  nextNumero: number
-  onSubmit: (data: Omit<RegistroIAAS, 'id' | 'createdAt' | 'updatedAt'>) => void
+  nextNumero?: number
+  onSubmit: (data: FormData) => void
   onCancel: () => void
 }
 
-export default function RegistroIaasForm({ initial, anio, nextNumero, onSubmit, onCancel }: RegistroIaasFormProps) {
-  const [form, setForm] = useState({
-    numero: initial?.numero || nextNumero,
-    mes: initial?.mes || '',
-    anio: initial?.anio || anio,
-    nombre: initial?.nombre || '',
-    rut: initial?.rut || '',
-    sexo: initial?.sexo || '',
-    fechaIngreso: initial?.fechaIngreso || '',
-    fechaInstalacion: initial?.fechaInstalacion || '',
-    fechaDiagCx: initial?.fechaDiagCx || '',
-    diasInvasivo: initial?.diasInvasivo ?? null,
-    iaas: initial?.iaas || '',
-    fallecido: initial?.fallecido || 'NO',
-    fechaCultivo: initial?.fechaCultivo || '',
-    agente: initial?.agente || '',
-    diagnostico: initial?.diagnostico || '',
-    indicacionInstalacion: initial?.indicacionInstalacion || '',
-    indicacionRetiro: initial?.indicacionRetiro || '',
-    responsable: initial?.responsable || '',
-    observaciones: initial?.observaciones || '',
+export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubmit, onCancel }: Props) {
+  const { form, set } = useFormState<FormData>(initial, {
+    numero: nextNumero, mes: '', anio, nombre: '', rut: '', sexo: '',
+    fechaIngreso: '', fechaInstalacion: '', fechaDiagCx: '',
+    diasInvasivo: null, iaas: '', fallecido: 'NO', fechaCultivo: '',
+    agente: '', diagnostico: '', indicacionInstalacion: '',
+    indicacionRetiro: '', responsable: '', observaciones: '',
   })
 
   useEffect(() => {
     if (form.fechaIngreso) {
       const mes = getMesFromDate(form.fechaIngreso)
-      if (mes !== form.mes) setForm((f) => ({ ...f, mes }))
+      if (mes !== form.mes) set('mes', mes)
     }
   }, [form.fechaIngreso])
 
-  const set = (key: string, value: string | number | null) => setForm((f) => ({ ...f, [key]: value }))
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(form as Omit<RegistroIAAS, 'id' | 'createdAt' | 'updatedAt'>)
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
       <div className="grid grid-cols-3 gap-4">
         <FormField label="N°">
           <Input type="number" value={form.numero} onChange={(e) => set('numero', parseInt(e.target.value) || 0)} />
@@ -120,10 +102,7 @@ export default function RegistroIaasForm({ initial, anio, nextNumero, onSubmit, 
       <FormField label="Observaciones (Criterios, segundo agente, etc.)">
         <Textarea value={form.observaciones} onChange={(e) => set('observaciones', e.target.value)} rows={2} />
       </FormField>
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
-        <button type="submit" className="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700">{initial?.id ? 'Actualizar' : 'Guardar'}</button>
-      </div>
+      <FormActions onCancel={onCancel} isEditing={!!initial?.id} />
     </form>
   )
 }

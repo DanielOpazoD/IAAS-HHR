@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './context/AuthContext'
-import AppLayout from './components/layout/AppLayout'
-import LoginPage from './components/auth/LoginPage'
-import DashboardPage from './pages/DashboardPage'
-import CirugiasPage from './pages/CirugiasPage'
-import PartosPage from './pages/PartosPage'
-import DipPage from './pages/DipPage'
-import ArepiPage from './pages/ArepiPage'
-import RegistroIaasPage from './pages/RegistroIaasPage'
-import ConsolidacionPage from './pages/ConsolidacionPage'
-import { getCurrentYear } from './utils/dates'
+import { AuthProvider, useAuth } from '@/context/AuthContext'
+import ErrorBoundary from '@/components/ui/ErrorBoundary'
+import AppLayout from '@/components/layout/AppLayout'
+import LoginPage from '@/components/auth/LoginPage'
+import DashboardPage from '@/pages/DashboardPage'
+import CirugiasPage from '@/pages/CirugiasPage'
+import PartosPage from '@/pages/PartosPage'
+import DipPage from '@/pages/DipPage'
+import ArepiPage from '@/pages/ArepiPage'
+import RegistroIaasPage from '@/pages/RegistroIaasPage'
+import ConsolidacionPage from '@/pages/ConsolidacionPage'
+import ImportPage from '@/pages/ImportPage'
+import { getCurrentYear } from '@/utils/dates'
 
 function ProtectedApp() {
   const { user, loading } = useAuth()
@@ -39,6 +41,7 @@ function ProtectedApp() {
         <Route path="arepi" element={<ArepiPage />} />
         <Route path="registro-iaas" element={<RegistroIaasPage />} />
         <Route path="consolidacion" element={<ConsolidacionPage />} />
+        <Route path="importar" element={<ImportPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
@@ -47,10 +50,12 @@ function ProtectedApp() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ProtectedApp />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <ProtectedApp />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
