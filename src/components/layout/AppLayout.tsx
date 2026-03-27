@@ -15,6 +15,10 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
   })
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // Close mobile sidebar on navigation
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: close sidebar on route change
+  useEffect(() => { setMobileOpen(false) }, [location.pathname])
+
   const toggleSidebar = () => {
     setSidebarCollapsed((prev) => {
       const next = !prev
@@ -22,11 +26,6 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
       return next
     })
   }
-
-  // Close mobile sidebar on navigation
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [location.pathname])
 
   return (
     <div className="flex min-h-screen bg-gray-50/50">

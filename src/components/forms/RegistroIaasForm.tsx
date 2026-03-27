@@ -33,7 +33,7 @@ export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubm
       const mes = getMesFromDate(form.fechaIngreso)
       if (mes !== form.mes) set('mes', mes)
     }
-  }, [form.fechaIngreso])
+  }, [form.fechaIngreso, form.mes, set])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

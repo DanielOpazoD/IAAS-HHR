@@ -31,7 +31,7 @@ export default function CirugiaForm({ initial, anio, onSubmit, onCancel }: Props
       const mes = getMesFromDate(form.fechaCirugia)
       if (mes !== form.mes) set('mes', mes)
     }
-  }, [form.fechaCirugia])
+  }, [form.fechaCirugia, form.mes, set])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

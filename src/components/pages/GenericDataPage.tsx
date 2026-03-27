@@ -6,10 +6,9 @@ import PageHeader from '@/components/layout/PageHeader'
 import DataTable from '@/components/ui/DataTable'
 import Modal from '@/components/ui/Modal'
 import SkeletonTable from '@/components/ui/SkeletonTable'
-import { useConfirm } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 import { useToastContext } from '@/context/ToastContext'
 import { getErrorMessage } from '@/utils/errors'
-import type { BaseRecord } from '@/types'
 import type { RegistryConfig } from '@/config/registries'
 
 /**

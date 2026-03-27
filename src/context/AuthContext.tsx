@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Provider + hook is a standard React pattern */
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User } from 'firebase/auth'
 import { isFirebaseConfigured, getFirebaseAuth } from '@/config/firebase'

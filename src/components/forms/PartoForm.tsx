@@ -31,7 +31,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
       const mes = getMesFromDate(form.fechaParto)
       if (mes !== form.mes) set('mes', mes)
     }
-  }, [form.fechaParto])
+  }, [form.fechaParto, form.mes, set])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

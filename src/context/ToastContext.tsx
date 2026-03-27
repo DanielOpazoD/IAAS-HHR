@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Provider + hook is a standard React pattern */
 import { createContext, useContext, ReactNode } from 'react'
 import { useToast, Toast } from '@/hooks/useToast'
 import ToastContainer from '@/components/ui/ToastContainer'
