@@ -11,6 +11,7 @@ import { useToastContext } from '@/context/ToastContext'
 import { getErrorMessage } from '@/utils/errors'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
+import { useAuth } from '@/context/AuthContext'
 import type { RegistryConfig } from '@/config/registries'
 
 /**
@@ -21,6 +22,8 @@ import type { RegistryConfig } from '@/config/registries'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function GenericDataPage({ config }: { config: RegistryConfig<any> }) {
   type T = Record<string, unknown>
+  const { canWrite: canWriteFn } = useAuth()
+  const writable = canWriteFn(config.collectionName)
   const { anio } = useOutletContext<{ anio: number }>()
   const { data, loading, add, update, remove } = useCollection<T>(config.collectionName, anio)
   const [modalOpen, setModalOpen] = useState(false)
@@ -124,7 +127,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       <PageHeader
         title={config.title}
         subtitle={config.subtitle(anio)}
-        onAdd={openNew}
+        onAdd={writable ? openNew : undefined}
         onExport={() => {
           try {
             config.exportFn(filtered, anio)
@@ -168,8 +171,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       <DataTable
         columns={config.columns}
         data={filtered}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={writable ? handleEdit : undefined}
+        onDelete={writable ? handleDelete : undefined}
         emptyMessage={`No hay ${config.entityName.plural} registrad${config.entityName.plural.endsWith('as') ? 'a' : 'o'}s`}
       />
 

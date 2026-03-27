@@ -2,6 +2,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User } from 'firebase/auth'
 import { isFirebaseConfigured, getFirebaseAuth } from '@/config/firebase'
+import type { UserRole } from '@/types/roles'
+import { ROLE_PERMISSIONS } from '@/types/roles'
+import * as userService from '@/services/userService'
 
 interface AuthContextType {
   user: User | null
@@ -9,6 +12,8 @@ interface AuthContextType {
   signIn: () => Promise<void>
   signOut: () => Promise<void>
   isDemo: boolean
+  role: UserRole | null
+  canWrite: (collection: string) => boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -22,6 +27,7 @@ const demoUser = {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(isFirebaseConfigured ? null : demoUser)
   const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [role, setRole] = useState<UserRole | null>(isFirebaseConfigured ? null : 'admin')
 
   useEffect(() => {
     if (!isFirebaseConfigured) return
@@ -31,8 +37,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getFirebaseAuth().then(async (authInstance) => {
       if (!authInstance) return
       const { onAuthStateChanged } = await import('firebase/auth')
-      unsubscribe = onAuthStateChanged(authInstance, (u) => {
+      unsubscribe = onAuthStateChanged(authInstance, async (u) => {
         setUser(u)
+        if (u) {
+          try {
+            let profile = await userService.getUserProfile(u.uid)
+            if (!profile) {
+              // First login: create as admin
+              profile = {
+                uid: u.uid,
+                email: u.email ?? '',
+                displayName: u.displayName ?? '',
+                role: 'admin',
+                createdAt: new Date().toISOString(),
+              }
+              await userService.createUserProfile(profile)
+            }
+            setRole(profile.role)
+          } catch {
+            setRole(null)
+          }
+        } else {
+          setRole(null)
+        }
         setLoading(false)
       })
     })
@@ -43,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async () => {
     if (!isFirebaseConfigured) {
       setUser(demoUser)
+      setRole('admin')
       return
     }
     const authInstance = await getFirebaseAuth()
@@ -54,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     if (!isFirebaseConfigured) {
       setUser(null)
+      setRole(null)
       return
     }
     const authInstance = await getFirebaseAuth()
@@ -62,8 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fbSignOut(authInstance)
   }
 
+  const canWrite = (collection: string): boolean => {
+    if (!role) return false
+    return ROLE_PERMISSIONS[role].canWrite.includes(collection)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isDemo: !isFirebaseConfigured }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, isDemo: !isFirebaseConfigured, role, canWrite }}>
       {children}
     </AuthContext.Provider>
   )

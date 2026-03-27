@@ -5,6 +5,7 @@ import { ToastProvider } from '@/context/ToastContext'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import AppLayout from '@/components/layout/AppLayout'
 import LoginPage from '@/components/auth/LoginPage'
+import PendingApprovalPage from '@/components/auth/PendingApprovalPage'
 import { getCurrentYear } from '@/utils/dates'
 
 // Lazy-loaded pages (code-split per route)
@@ -16,20 +17,21 @@ const ArepiPage = lazy(() => import('@/pages/ArepiPage'))
 const RegistroIaasPage = lazy(() => import('@/pages/RegistroIaasPage'))
 const ConsolidacionPage = lazy(() => import('@/pages/ConsolidacionPage'))
 const ImportPage = lazy(() => import('@/pages/ImportPage'))
+const AdminUsersPage = lazy(() => import('@/pages/AdminUsersPage'))
 
 function PageLoader() {
   return (
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
         <div className="w-6 h-6 border-3 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-        <p className="text-xs text-gray-400">Cargando módulo...</p>
+        <p className="text-xs text-gray-400">Cargando modulo...</p>
       </div>
     </div>
   )
 }
 
 function ProtectedApp() {
-  const { user, loading } = useAuth()
+  const { user, loading, role } = useAuth()
   const [anio, setAnio] = useState(getCurrentYear())
 
   if (loading) {
@@ -45,6 +47,8 @@ function ProtectedApp() {
 
   if (!user) return <LoginPage />
 
+  if (role === null) return <PendingApprovalPage />
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
@@ -57,6 +61,7 @@ function ProtectedApp() {
           <Route path="registro-iaas" element={<RegistroIaasPage />} />
           <Route path="consolidacion" element={<ConsolidacionPage />} />
           <Route path="importar" element={<ImportPage />} />
+          <Route path="admin/users" element={<AdminUsersPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

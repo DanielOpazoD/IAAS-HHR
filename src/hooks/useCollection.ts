@@ -3,6 +3,8 @@ import { where, orderBy, QueryConstraint } from 'firebase/firestore'
 import * as firestoreService from '@/services/firestore'
 import { isFirebaseConfigured } from '@/config/firebase'
 import { getErrorMessage } from '@/utils/errors'
+import { useAuth } from '@/context/AuthContext'
+import { ROLE_PERMISSIONS } from '@/types/roles'
 
 function getLocalKey(collectionName: string, anio?: number) {
   return anio ? `iaas_${collectionName}_${anio}` : `iaas_${collectionName}`
@@ -33,6 +35,7 @@ export function useCollection<T>(
   anio?: number
 ) {
   const localKey = getLocalKey(collectionName, anio)
+  const { user, role } = useAuth()
 
   // Demo mode: version counter triggers re-reads from localStorage after CRUD ops
   const versionRef = useRef(0)
@@ -71,17 +74,35 @@ export function useCollection<T>(
     return unsubscribe
   }, [collectionName, anio])
 
+  function checkWritePermission() {
+    if (role && !ROLE_PERMISSIONS[role].canWrite.includes(collectionName)) {
+      throw new Error('No tienes permisos para esta operacion')
+    }
+  }
+
   const add = async (item: T) => {
     try {
       setError(null)
+      checkWritePermission()
+      const uid = user?.uid ?? 'unknown'
       if (!isFirebaseConfigured) {
-        const newItem = { ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() } as T & { id: string }
+        const newItem = {
+          ...item,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          createdBy: uid,
+          updatedBy: uid,
+        } as T & { id: string }
         const updated = [newItem, ...loadLocal<T>(localKey)]
         saveLocal(localKey, updated)
         setVersion(++versionRef.current)
         return newItem.id
       }
-      return firestoreService.create(collectionName, item as unknown as Record<string, unknown>)
+      return firestoreService.create(collectionName, {
+        ...(item as unknown as Record<string, unknown>),
+        createdBy: uid,
+        updatedBy: uid,
+      })
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
@@ -91,14 +112,19 @@ export function useCollection<T>(
   const update = async (id: string, item: Partial<T>) => {
     try {
       setError(null)
+      checkWritePermission()
+      const uid = user?.uid ?? 'unknown'
       if (!isFirebaseConfigured) {
         const current = loadLocal<T>(localKey)
-        const updated = current.map((d) => d.id === id ? { ...d, ...item } : d)
+        const updated = current.map((d) => d.id === id ? { ...d, ...item, updatedBy: uid } : d)
         saveLocal(localKey, updated)
         setVersion(++versionRef.current)
         return
       }
-      return firestoreService.update(collectionName, id, item as unknown as Record<string, unknown>)
+      return firestoreService.update(collectionName, id, {
+        ...(item as unknown as Record<string, unknown>),
+        updatedBy: uid,
+      })
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
@@ -108,6 +134,7 @@ export function useCollection<T>(
   const remove = async (id: string) => {
     try {
       setError(null)
+      checkWritePermission()
       if (!isFirebaseConfigured) {
         const current = loadLocal<T>(localKey)
         const updated = current.filter((d) => d.id !== id)

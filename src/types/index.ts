@@ -6,6 +6,7 @@ export interface BaseRecord {
   createdAt?: Timestamp | string
   updatedAt?: Timestamp | string
   createdBy?: string
+  updatedBy?: string
 }
 
 /** Cirugías Trazadoras - Tracer surgery tracking */

@@ -1,12 +1,18 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { createElement, ReactNode } from 'react'
 import { useCollection } from '@/hooks/useCollection'
+import { AuthProvider } from '@/context/AuthContext'
 
 // useCollection in demo mode uses localStorage
 // These tests verify the localStorage CRUD path
 
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(AuthProvider, null, children)
+}
+
 describe('useCollection (demo/localStorage mode)', () => {
-  const collectionName = 'test_collection'
+  const collectionName = 'cirugias'
   const anio = 2026
   const localKey = `iaas_${collectionName}_${anio}`
 
@@ -15,7 +21,7 @@ describe('useCollection (demo/localStorage mode)', () => {
   })
 
   it('starts with empty data when localStorage is empty', () => {
-    const { result } = renderHook(() => useCollection(collectionName, anio))
+    const { result } = renderHook(() => useCollection(collectionName, anio), { wrapper })
     expect(result.current.data).toEqual([])
     expect(result.current.loading).toBe(false)
     expect(result.current.error).toBeNull()
@@ -24,13 +30,13 @@ describe('useCollection (demo/localStorage mode)', () => {
   it('loads existing data from localStorage', () => {
     const existing = [{ id: '1', nombre: 'Test', createdAt: '2026-01-01' }]
     localStorage.setItem(localKey, JSON.stringify(existing))
-    const { result } = renderHook(() => useCollection(collectionName, anio))
+    const { result } = renderHook(() => useCollection(collectionName, anio), { wrapper })
     expect(result.current.data).toHaveLength(1)
     expect((result.current.data[0] as Record<string, unknown>).nombre).toBe('Test')
   })
 
   it('adds a new item', async () => {
-    const { result } = renderHook(() => useCollection(collectionName, anio))
+    const { result } = renderHook(() => useCollection(collectionName, anio), { wrapper })
     await act(async () => {
       await result.current.add({ nombre: 'Nuevo' })
     })
@@ -43,7 +49,7 @@ describe('useCollection (demo/localStorage mode)', () => {
   })
 
   it('updates an existing item', async () => {
-    const { result } = renderHook(() => useCollection(collectionName, anio))
+    const { result } = renderHook(() => useCollection(collectionName, anio), { wrapper })
     await act(async () => {
       await result.current.add({ nombre: 'Original' })
     })
@@ -54,7 +60,7 @@ describe('useCollection (demo/localStorage mode)', () => {
   })
 
   it('removes an item', async () => {
-    const { result } = renderHook(() => useCollection(collectionName, anio))
+    const { result } = renderHook(() => useCollection(collectionName, anio), { wrapper })
     await act(async () => {
       await result.current.add({ nombre: 'To Delete' })
     })
@@ -67,7 +73,7 @@ describe('useCollection (demo/localStorage mode)', () => {
   })
 
   it('handles multiple adds', async () => {
-    const { result } = renderHook(() => useCollection(collectionName, anio))
+    const { result } = renderHook(() => useCollection(collectionName, anio), { wrapper })
     await act(async () => {
       await result.current.add({ nombre: 'A' })
       await result.current.add({ nombre: 'B' })
@@ -77,8 +83,8 @@ describe('useCollection (demo/localStorage mode)', () => {
   })
 
   it('uses different keys for different years', async () => {
-    const { result: r2026 } = renderHook(() => useCollection(collectionName, 2026))
-    const { result: r2025 } = renderHook(() => useCollection(collectionName, 2025))
+    const { result: r2026 } = renderHook(() => useCollection(collectionName, 2026), { wrapper })
+    const { result: r2025 } = renderHook(() => useCollection(collectionName, 2025), { wrapper })
     await act(async () => {
       await r2026.current.add({ nombre: '2026 data' })
     })
@@ -88,7 +94,7 @@ describe('useCollection (demo/localStorage mode)', () => {
 
   it('handles malformed localStorage gracefully', () => {
     localStorage.setItem(localKey, 'invalid json {{{')
-    const { result } = renderHook(() => useCollection(collectionName, anio))
+    const { result } = renderHook(() => useCollection(collectionName, anio), { wrapper })
     expect(result.current.data).toEqual([])
   })
 })
