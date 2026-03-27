@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { hashPin } from '../../utils/crypto'
 
 const PIN_STORAGE_KEY = 'iaas_lock_pin'
 const LOCK_ENABLED_KEY = 'iaas_lock_enabled'
@@ -52,9 +53,10 @@ export default function LockScreen({ children }: { children: React.ReactNode }) 
     }
   }, [locked])
 
-  const handleUnlock = () => {
-    const storedPin = localStorage.getItem(PIN_STORAGE_KEY)
-    if (pin === storedPin) {
+  const handleUnlock = async () => {
+    const storedHash = localStorage.getItem(PIN_STORAGE_KEY)
+    const inputHash = await hashPin(pin)
+    if (inputHash === storedHash) {
       setLocked(false)
       setPin('')
       setError('')

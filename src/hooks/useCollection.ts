@@ -32,7 +32,7 @@ export function useCollection<T>(
     : useLocalStorageAdapter<T>(collectionName, anio)
 
   const checkWritePermission = useCallback(() => {
-    if (role && !ROLE_PERMISSIONS[role].canWrite.includes(collectionName)) {
+    if (role && !(ROLE_PERMISSIONS[role].canWrite as string[]).includes(collectionName)) {
       throw new Error('No tienes permisos para esta operacion')
     }
   }, [role, collectionName])

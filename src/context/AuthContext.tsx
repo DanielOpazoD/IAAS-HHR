@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const canWrite = (collection: string): boolean => {
     if (!role) return false
-    return ROLE_PERMISSIONS[role].canWrite.includes(collection)
+    return (ROLE_PERMISSIONS[role].canWrite as string[]).includes(collection)
   }
 
   return (

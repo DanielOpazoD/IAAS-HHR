@@ -1,4 +1,5 @@
 import { ReactNode, useState, useMemo } from 'react'
+import { useDebounce } from '@/hooks/useDebounce'
 
 interface Column<T> {
   key: string
@@ -30,6 +31,7 @@ export default function DataTable<T extends { id?: string }>({
   searchKeys = ['nombre', 'rut'],
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>('asc')
 
@@ -46,8 +48,8 @@ export default function DataTable<T extends { id?: string }>({
     let result = data
 
     // Search filter
-    if (search.trim()) {
-      const q = search.toLowerCase().trim()
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase().trim()
       result = result.filter((item) => {
         const rec = item as Record<string, unknown>
         return searchKeys.some((key) => {
@@ -70,7 +72,7 @@ export default function DataTable<T extends { id?: string }>({
     }
 
     return result
-  }, [data, search, searchKeys, sortKey, sortDir])
+  }, [data, debouncedSearch, searchKeys, sortKey, sortDir])
 
   if (data.length === 0) {
     return (

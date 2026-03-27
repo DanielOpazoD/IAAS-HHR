@@ -9,6 +9,9 @@ export interface BaseRecord {
   updatedBy?: string
 }
 
+/** A record that has been saved (guaranteed to have an id) */
+export type SavedRecord<T extends BaseRecord> = T & { id: string }
+
 /** Cirugías Trazadoras - Tracer surgery tracking */
 export interface CirugiaTrazadora extends BaseRecord {
   mes: string

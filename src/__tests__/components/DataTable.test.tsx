@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import DataTable from '@/components/ui/DataTable'
 
 interface TestItem {
@@ -73,13 +73,16 @@ describe('DataTable', () => {
     expect(screen.queryByPlaceholderText('Buscar por nombre o RUT...')).toBeNull()
   })
 
-  it('filters data by search term', () => {
+  it('filters data by search term (after debounce)', () => {
+    vi.useFakeTimers()
     render(<DataTable columns={columns} data={sampleData} />)
     const input = screen.getByPlaceholderText('Buscar por nombre o RUT...')
     fireEvent.change(input, { target: { value: 'Juan' } })
+    act(() => { vi.advanceTimersByTime(300) })
     expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
     expect(screen.queryByText('María López')).toBeNull()
     expect(screen.getByText('1 de 4 registros')).toBeInTheDocument()
+    vi.useRealTimers()
   })
 
   it('shows clear search button when searching', () => {

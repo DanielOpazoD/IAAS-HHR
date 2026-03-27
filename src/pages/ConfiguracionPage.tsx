@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { hashPin } from '../utils/crypto'
 
 const APP_VERSION = '2.2.0'
 const PIN_STORAGE_KEY = 'iaas_lock_pin'
@@ -18,7 +19,7 @@ export default function ConfiguracionPage() {
     setLockEnabled(enabled)
   }, [])
 
-  const handleSavePin = () => {
+  const handleSavePin = async () => {
     setPinMessage(null)
     if (pin.length < 4) {
       setPinMessage({ type: 'error', text: 'El PIN debe tener al menos 4 digitos' })
@@ -32,7 +33,8 @@ export default function ConfiguracionPage() {
       setPinMessage({ type: 'error', text: 'Los PIN no coinciden' })
       return
     }
-    localStorage.setItem(PIN_STORAGE_KEY, pin)
+    const hashed = await hashPin(pin)
+    localStorage.setItem(PIN_STORAGE_KEY, hashed)
     localStorage.setItem(LOCK_ENABLED_KEY, 'true')
     setLockEnabled(true)
     setHasExistingPin(true)

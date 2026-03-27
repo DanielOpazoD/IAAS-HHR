@@ -16,6 +16,29 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 
+const MAX_RETRIES = 3
+const BASE_DELAY_MS = 500
+
+async function withRetry<T>(operation: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await operation()
+    } catch (error) {
+      if (attempt === retries) throw error
+      const isRetryable = error instanceof Error && (
+        error.message.includes('unavailable') ||
+        error.message.includes('deadline-exceeded') ||
+        error.message.includes('resource-exhausted') ||
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('network')
+      )
+      if (!isRetryable) throw error
+      await new Promise(resolve => setTimeout(resolve, BASE_DELAY_MS * Math.pow(2, attempt)))
+    }
+  }
+  throw new Error('Max retries exceeded')
+}
+
 /** Asserts that Firestore is initialized (only called in Firebase mode) */
 function getDb(): Firestore {
   if (!db) throw new Error('Firestore not initialized. Check Firebase configuration.')
@@ -48,12 +71,14 @@ export async function create<T extends Record<string, unknown>>(
   collectionName: string,
   data: T
 ): Promise<string> {
-  const docRef = await addDoc(collection(getDb(), collectionName), {
-    ...data,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+  return withRetry(async () => {
+    const docRef = await addDoc(collection(getDb(), collectionName), {
+      ...data,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    })
+    return docRef.id
   })
-  return docRef.id
 }
 
 /** Updates an existing document. Automatically sets updatedAt timestamp. */
@@ -62,14 +87,47 @@ export async function update<T extends Record<string, unknown>>(
   id: string,
   data: Partial<T>
 ): Promise<void> {
-  const docRef = doc(getDb(), collectionName, id)
-  await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() })
+  return withRetry(async () => {
+    const docRef = doc(getDb(), collectionName, id)
+    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() })
+  })
 }
 
 /** Permanently deletes a document by ID. */
 export async function remove(collectionName: string, id: string): Promise<void> {
-  const docRef = doc(getDb(), collectionName, id)
-  await deleteDoc(docRef)
+  return withRetry(async () => {
+    const docRef = doc(getDb(), collectionName, id)
+    await deleteDoc(docRef)
+  })
+}
+
+/** Creates multiple documents in batches of 500 (Firestore batch limit). Returns all new document IDs. */
+export async function batchCreate<T extends Record<string, unknown>>(
+  collectionName: string,
+  items: T[]
+): Promise<string[]> {
+  const { writeBatch } = await import('firebase/firestore')
+  const ids: string[] = []
+
+  // Firestore batch limit is 500
+  for (let i = 0; i < items.length; i += 500) {
+    const chunk = items.slice(i, i + 500)
+    const batch = writeBatch(getDb())
+
+    for (const item of chunk) {
+      const docRef = doc(collection(getDb(), collectionName))
+      batch.set(docRef, {
+        ...item,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      })
+      ids.push(docRef.id)
+    }
+
+    await withRetry(() => batch.commit())
+  }
+
+  return ids
 }
 
 /**

@@ -30,11 +30,11 @@ function RateTable({
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full text-xs table-fixed">
           <thead>
             <tr className="bg-gray-50 border-b">
               <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-8">N°</th>
-              <th className="px-3 py-2.5 text-left font-medium text-gray-600">Indicador</th>
+              <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-[140px]">Indicador</th>
               <th className="px-3 py-2.5 text-left font-medium text-gray-600 w-20">Variable</th>
               {meses.map((m) => <th key={m} className="px-3 py-2.5 text-center font-medium text-gray-600 w-16">{m.slice(0, 3)}</th>)}
               <th className="px-3 py-2.5 text-center font-medium text-gray-600 w-16">Total</th>
@@ -63,7 +63,7 @@ function RateTable({
               return rows.map((row, ri) => (
                 <tr key={`${ind.id}-${row}`} className={ri === 0 ? 'border-t-2 border-gray-200' : ''}>
                   {ri === 0 && <td rowSpan={3} className="px-3 py-1.5 font-medium text-gray-900 align-top">{idx + 1}</td>}
-                  {ri === 0 && <td rowSpan={3} className="px-3 py-1.5 text-gray-700 align-top text-[11px]">{ind.nombre}</td>}
+                  {ri === 0 && <td rowSpan={3} className="px-3 py-1.5 text-gray-700 align-top text-[11px] w-[140px] break-words">{ind.nombre}</td>}
                   <td className="px-3 py-1 text-gray-500">{labels[ri]}</td>
                   {meses.map((mes, mi) => {
                     const d = mesData[mi]

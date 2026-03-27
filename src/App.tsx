@@ -1,7 +1,8 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
+import { ROLE_PERMISSIONS } from '@/types/roles'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import AppLayout from '@/components/layout/AppLayout'
 import LoginPage from '@/components/auth/LoginPage'
@@ -32,6 +33,15 @@ function PageLoader() {
   )
 }
 
+function RoleRoute({ collection, adminOnly, children }: { collection?: string; adminOnly?: boolean; children: ReactNode }) {
+  const { role } = useAuth()
+  if (adminOnly && role !== 'admin') return <Navigate to="/" replace />
+  if (collection && role && role !== 'admin' && !(ROLE_PERMISSIONS[role].canWrite as string[]).includes(collection)) {
+    return <Navigate to="/" replace />
+  }
+  return <>{children}</>
+}
+
 function ProtectedApp() {
   const { user, loading, role } = useAuth()
   const [anio, setAnio] = useState(getCurrentYear())
@@ -57,15 +67,15 @@ function ProtectedApp() {
       <Routes>
         <Route element={<AppLayout anio={anio} onAnioChange={setAnio} />}>
           <Route index element={<DashboardPage />} />
-          <Route path="cirugias" element={<CirugiasPage />} />
-          <Route path="partos" element={<PartosPage />} />
-          <Route path="dip" element={<DipPage />} />
-          <Route path="arepi" element={<ArepiPage />} />
-          <Route path="registro-iaas" element={<RegistroIaasPage />} />
-          <Route path="consolidacion" element={<ConsolidacionPage />} />
-          <Route path="importar" element={<ImportPage />} />
-          <Route path="admin/users" element={<AdminUsersPage />} />
-          <Route path="configuracion" element={<ConfiguracionPage />} />
+          <Route path="cirugias" element={<RoleRoute collection="cirugias"><CirugiasPage /></RoleRoute>} />
+          <Route path="partos" element={<RoleRoute collection="partos"><PartosPage /></RoleRoute>} />
+          <Route path="dip" element={<RoleRoute collection="dip"><DipPage /></RoleRoute>} />
+          <Route path="arepi" element={<RoleRoute collection="arepi"><ArepiPage /></RoleRoute>} />
+          <Route path="registro-iaas" element={<RoleRoute collection="registroIaas"><RegistroIaasPage /></RoleRoute>} />
+          <Route path="consolidacion" element={<RoleRoute collection="consolidacion"><ConsolidacionPage /></RoleRoute>} />
+          <Route path="importar" element={<RoleRoute adminOnly><ImportPage /></RoleRoute>} />
+          <Route path="admin/users" element={<RoleRoute adminOnly><AdminUsersPage /></RoleRoute>} />
+          <Route path="configuracion" element={<RoleRoute adminOnly><ConfiguracionPage /></RoleRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

@@ -1,5 +1,8 @@
 export type UserRole = 'admin' | 'pabellon' | 'matronas'
 
+/** Valid collection names used throughout the app */
+export type CollectionName = 'cirugias' | 'partos' | 'dip' | 'arepi' | 'registroIaas' | 'consolidacion'
+
 export interface UserProfile {
   uid: string
   email: string
@@ -8,21 +11,25 @@ export interface UserProfile {
   createdAt: string
 }
 
-/** Which collections each role can write to */
+/** Which collections each role can read/write */
 export const ROLE_PERMISSIONS: Record<UserRole, {
-  canWrite: string[]
+  canWrite: CollectionName[]
+  canRead: CollectionName[]
   label: string
 }> = {
   admin: {
     canWrite: ['cirugias', 'partos', 'dip', 'arepi', 'registroIaas', 'consolidacion'],
+    canRead: ['cirugias', 'partos', 'dip', 'arepi', 'registroIaas', 'consolidacion'],
     label: 'Enfermera IAAS (Admin)',
   },
   pabellon: {
     canWrite: ['cirugias', 'dip'],
+    canRead: ['cirugias', 'dip'],
     label: 'Enfermera Pabellon',
   },
   matronas: {
     canWrite: ['partos'],
+    canRead: ['partos'],
     label: 'Matrona',
   },
 }
