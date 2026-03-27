@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { MESES } from '@/utils/constants'
 import PageHeader from '@/components/layout/PageHeader'
 import DataTable from '@/components/ui/DataTable'
 import Modal from '@/components/ui/Modal'
+import SkeletonTable from '@/components/ui/SkeletonTable'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { useToastContext } from '@/context/ToastContext'
 import type { BaseRecord } from '@/types'
@@ -71,19 +72,34 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
     }
   }
 
+  const openNew = useCallback(() => {
+    setEditing(undefined)
+    setModalOpen(true)
+  }, [])
+
   const closeModal = () => {
     setModalOpen(false)
     setEditing(undefined)
   }
 
+  // Keyboard shortcut: Ctrl+N to add new record
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !modalOpen) {
+        e.preventDefault()
+        openNew()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [modalOpen, openNew])
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
-        <div className="text-center">
-          <div className="w-6 h-6 border-3 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <p className="text-sm">Cargando...</p>
-        </div>
-      </div>
+      <>
+        <PageHeader title={config.title} subtitle={config.subtitle(anio)} />
+        <SkeletonTable rows={6} cols={config.columns.length} />
+      </>
     )
   }
 
@@ -94,7 +110,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       <PageHeader
         title={config.title}
         subtitle={config.subtitle(anio)}
-        onAdd={() => { setEditing(undefined); setModalOpen(true) }}
+        onAdd={openNew}
         onExport={() => config.exportFn(filtered, anio)}
       />
 
