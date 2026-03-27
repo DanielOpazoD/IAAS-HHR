@@ -8,6 +8,7 @@ import Modal from '@/components/ui/Modal'
 import SkeletonTable from '@/components/ui/SkeletonTable'
 import { useConfirm } from '@/components/ui/ConfirmDialog'
 import { useToastContext } from '@/context/ToastContext'
+import { getErrorMessage } from '@/utils/errors'
 import type { BaseRecord } from '@/types'
 import type { RegistryConfig } from '@/config/registries'
 
@@ -48,8 +49,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       }
       setModalOpen(false)
       setEditing(undefined)
-    } catch {
-      addToast(`Error al guardar ${config.entityName.singular.toLowerCase()}`, 'error')
+    } catch (err) {
+      addToast(`Error al guardar: ${getErrorMessage(err)}`, 'error')
     }
   }
 
@@ -67,8 +68,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       try {
         await remove(item.id)
         addToast('Registro eliminado', 'info')
-      } catch {
-        addToast('Error al eliminar registro', 'error')
+      } catch (err) {
+        addToast(`Error al eliminar: ${getErrorMessage(err)}`, 'error')
       }
     }
   }
@@ -116,8 +117,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
           try {
             config.exportFn(filtered, anio)
             addToast('Excel exportado correctamente', 'success')
-          } catch {
-            addToast('Error al exportar Excel', 'error')
+          } catch (err) {
+            addToast(`Error al exportar: ${getErrorMessage(err)}`, 'error')
           }
         }}
       />

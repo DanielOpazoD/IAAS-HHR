@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { parseExcelFile, ImportResult } from '@/services/excel/excelImport'
 import { isFirebaseConfigured } from '@/config/firebase'
 import { useToastContext } from '@/context/ToastContext'
+import { getErrorMessage } from '@/utils/errors'
 import * as firestoreService from '@/services/firestore'
 
 function getLocalKey(collection: string, anio: number) {
@@ -41,7 +42,7 @@ export default function ImportPage() {
         const parsed = parseExcelFile(buffer)
         setResult(parsed)
       } catch (err: unknown) {
-        setError(`Error al leer el archivo: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+        setError(`Error al leer el archivo: ${getErrorMessage(err)}`)
       }
     }
     reader.readAsArrayBuffer(file)
@@ -92,6 +93,7 @@ export default function ImportPage() {
 
         for (const { name, data } of collections) {
           for (const item of data) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { id, ...rest } = item
             await firestoreService.create(name, rest as Record<string, unknown>)
           }
@@ -101,7 +103,7 @@ export default function ImportPage() {
       setDone(true)
       addToast(`${total} registros importados correctamente`, 'success')
     } catch (err: unknown) {
-      setError(`Error al importar: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+      setError(`Error al importar: ${getErrorMessage(err)}`)
       addToast('Error al importar datos', 'error')
     } finally {
       setImporting(false)

@@ -2,6 +2,7 @@ import { AgenteRiesgoEpidemico } from '@/types'
 import { XLSX, headerStyle, titleStyle, subtitleStyle, saveWorkbook, setColWidths, setRowHeight, addCell, getRowStyle, getRowStyleCenter, mergeCells } from './utils'
 import { formatDateDisplay } from '@/utils/dates'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function buildArepiSheet(data: AgenteRiesgoEpidemico[], anio: number): XLSX.WorkSheet {
   const ws: XLSX.WorkSheet = {}
 

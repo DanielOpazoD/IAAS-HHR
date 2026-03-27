@@ -4,6 +4,11 @@ export const MESES = [
   'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ] as const
 
+export const MESES_CORTOS = [
+  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+] as const
+
 export const CUATRIMESTRES: Record<number, number[]> = {
   1: [0, 1, 2, 3],
   2: [4, 5, 6, 7],
@@ -59,3 +64,21 @@ export const INDICADORES_CX_PARTOS = [
   { id: 'endometritis_pv', nombre: 'Endometritis de Pacientes Post Parto Vaginal', varInfeccion: 'N° de endometritis PV', irm: 0.2 },
   { id: 'endometritis_cesarea', nombre: 'Endometritis en Cesárea sin TP', varInfeccion: 'N° de endometritis cs/stp', irm: 0.1 },
 ] as const
+
+/**
+ * Mapping from CxPartos indicator IDs to their data source configuration.
+ * Used by ConsolidacionPage to dynamically calculate rates without hardcoded conditionals.
+ */
+export type CxPartosSource =
+  | { type: 'cirugia'; tipoCirugia: string; ihoField: 'iho' }
+  | { type: 'parto'; tipoParto: string; conTP?: string; iaasField: 'signosSintomasIAAS' }
+
+export const CX_PARTOS_SOURCE_MAP: Record<string, CxPartosSource> = {
+  iho_cole_laparoscopica: { type: 'cirugia', tipoCirugia: 'Colecistectomía Laparoscópica', ihoField: 'iho' },
+  iho_cole_laparotomica: { type: 'cirugia', tipoCirugia: 'Colecistectomía Laparotómica', ihoField: 'iho' },
+  iho_hernia: { type: 'cirugia', tipoCirugia: 'Hernia Inguinal c/s malla', ihoField: 'iho' },
+  iho_cesarea: { type: 'cirugia', tipoCirugia: 'Cesárea', ihoField: 'iho' },
+  endoftalmitis: { type: 'cirugia', tipoCirugia: 'Cataratas c/s LIO', ihoField: 'iho' },
+  endometritis_pv: { type: 'parto', tipoParto: 'Parto vaginal', iaasField: 'signosSintomasIAAS' },
+  endometritis_cesarea: { type: 'parto', tipoParto: 'Cesárea', conTP: 'Sin TP', iaasField: 'signosSintomasIAAS' },
+}

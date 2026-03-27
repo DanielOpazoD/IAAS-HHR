@@ -3,8 +3,9 @@ import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { useToastContext } from '@/context/ToastContext'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, DatosConsolidacion } from '@/types'
-import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
+import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS, CX_PARTOS_SOURCE_MAP } from '@/utils/constants'
 import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '@/utils/rates'
+import { getErrorMessage } from '@/utils/errors'
 import { exportConsolidacion } from '@/services/excel/consolidacionExport'
 
 function RateTable({
@@ -126,35 +127,17 @@ export default function ConsolidacionPage() {
     const manual = manualData?.cxPartosData?.[indId]?.[mes]
     if (manual) return { infecciones: manual.infecciones, denominador: manual.procedimientosVigilados }
 
-    if (indId === 'iho_cole_laparoscopica') {
-      const cx = cirugias.filter((c) => c.mes === mes && c.tipoCirugia === 'Colecistectomía Laparoscópica')
-      return { infecciones: cx.filter((c) => c.iho === 'SI').length, denominador: cx.length }
+    const source = CX_PARTOS_SOURCE_MAP[indId]
+    if (!source) return { infecciones: 0, denominador: 0 }
+
+    if (source.type === 'cirugia') {
+      const cx = cirugias.filter((c) => c.mes === mes && c.tipoCirugia === source.tipoCirugia)
+      return { infecciones: cx.filter((c) => c[source.ihoField] === 'SI').length, denominador: cx.length }
     }
-    if (indId === 'iho_cole_laparotomica') {
-      const cx = cirugias.filter((c) => c.mes === mes && c.tipoCirugia === 'Colecistectomía Laparotómica')
-      return { infecciones: cx.filter((c) => c.iho === 'SI').length, denominador: cx.length }
-    }
-    if (indId === 'iho_hernia') {
-      const cx = cirugias.filter((c) => c.mes === mes && c.tipoCirugia === 'Hernia Inguinal c/s malla')
-      return { infecciones: cx.filter((c) => c.iho === 'SI').length, denominador: cx.length }
-    }
-    if (indId === 'iho_cesarea') {
-      const cx = cirugias.filter((c) => c.mes === mes && c.tipoCirugia === 'Cesárea')
-      return { infecciones: cx.filter((c) => c.iho === 'SI').length, denominador: cx.length }
-    }
-    if (indId === 'endoftalmitis') {
-      const cx = cirugias.filter((c) => c.mes === mes && c.tipoCirugia === 'Cataratas c/s LIO')
-      return { infecciones: cx.filter((c) => c.iho === 'SI').length, denominador: cx.length }
-    }
-    if (indId === 'endometritis_pv') {
-      const p = partos.filter((pt) => pt.mes === mes && pt.tipo === 'Parto vaginal')
-      return { infecciones: p.filter((pt) => pt.signosSintomasIAAS === 'SI').length, denominador: p.length }
-    }
-    if (indId === 'endometritis_cesarea') {
-      const p = partos.filter((pt) => pt.mes === mes && pt.tipo === 'Cesárea' && pt.conTP === 'Sin TP')
-      return { infecciones: p.filter((pt) => pt.signosSintomasIAAS === 'SI').length, denominador: p.length }
-    }
-    return { infecciones: 0, denominador: 0 }
+
+    // source.type === 'parto'
+    const p = partos.filter((pt) => pt.mes === mes && pt.tipo === source.tipoParto && (!source.conTP || pt.conTP === source.conTP))
+    return { infecciones: p.filter((pt) => pt[source.iaasField] === 'SI').length, denominador: p.length }
   }, [manualData, cirugias, partos])
 
   const { addToast } = useToastContext()
@@ -163,8 +146,8 @@ export default function ConsolidacionPage() {
     try {
       exportConsolidacion(anio, cuatrimestre, meses, getDipData, getArepiData, getCxPartosData)
       addToast('Consolidación exportada correctamente', 'success')
-    } catch {
-      addToast('Error al exportar consolidación', 'error')
+    } catch (err) {
+      addToast(`Error al exportar: ${getErrorMessage(err)}`, 'error')
     }
   }
 

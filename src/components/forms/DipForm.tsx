@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { DispositivoInvasivo, PeriodoDIP } from '@/types'
 import { TIPOS_DIP, SERVICIOS, MESES } from '@/utils/constants'
-import { formatRut, validateRut } from '@/utils/rut'
 import { getMesFromDate, calcDaysBetween } from '@/utils/dates'
+import { useRutField } from '@/hooks/useRutField'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
 import FormActions from '@/components/ui/FormActions'
 
@@ -31,8 +31,20 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
     revisionFC: initial?.revisionFC || '',
   })
 
-  const [rutError, setRutError] = useState('')
   const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }))
+
+  const setRut = useCallback((v: string) => set('rut', v), [])
+  const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
+
+  /**
+   * Stable dependency key for periodos date changes.
+   * Prevents the old bug where .map().join() in useEffect deps created a
+   * new string every render, causing infinite re-render loops.
+   */
+  const periodosKey = useMemo(
+    () => form.periodos.map((p) => `${p.fechaInstalacion}|${p.fechaRetiro}`).join(','),
+    [form.periodos]
+  )
 
   useEffect(() => {
     const periodos = form.periodos.map((p) => ({
@@ -41,13 +53,15 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
     }))
     const totalDias = periodos.reduce((sum, p) => sum + (p.numDias || 0), 0)
     setForm((f) => ({ ...f, periodos, totalDias }))
-  }, [form.periodos.map((p) => p.fechaInstalacion + p.fechaRetiro).join(',')])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodosKey])
 
   useEffect(() => {
     if (form.periodos[0]?.fechaInstalacion) {
       const mes = getMesFromDate(form.periodos[0].fechaInstalacion)
       if (mes && mes !== form.mes) setForm((f) => ({ ...f, mes }))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.periodos[0]?.fechaInstalacion])
 
   const setPeriodo = (idx: number, key: keyof PeriodoDIP, value: string) => {
@@ -66,22 +80,9 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
     if (form.periodos.length > 1) setForm((f) => ({ ...f, periodos: f.periodos.filter((_, i) => i !== idx) }))
   }
 
-  const handleRutChange = (value: string) => {
-    const formatted = formatRut(value)
-    set('rut', formatted)
-    if (formatted.length >= 3) {
-      setRutError(validateRut(formatted) ? '' : 'RUT inválido')
-    } else {
-      setRutError('')
-    }
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.rut && !validateRut(form.rut)) {
-      setRutError('RUT inválido')
-      return
-    }
+    if (!validateRutField(form.rut)) return
     onSubmit(form)
   }
 
@@ -92,7 +93,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel }: Props) {
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
         </FormField>
         <FormField label="RUT" required error={rutError}>
-          <Input value={form.rut} onChange={(e) => handleRutChange(e.target.value)} placeholder="12.345.678-9" required />
+          <Input value={form.rut} onChange={(e) => handleRutChange(e.target.value)} placeholder="12.345.678-9" required aria-invalid={!!rutError} />
         </FormField>
       </div>
       <div className="grid grid-cols-4 gap-4">

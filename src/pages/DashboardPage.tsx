@@ -3,10 +3,9 @@ import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { useToastContext } from '@/context/ToastContext'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, AgenteRiesgoEpidemico, RegistroIAAS } from '@/types'
+import { MESES, MESES_CORTOS } from '@/utils/constants'
+import { getErrorMessage } from '@/utils/errors'
 import { exportFullWorkbook } from '@/services/excel/fullExport'
-
-const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
 function StatCard({ label, count, icon, accent }: { label: string; count: number; icon: string; accent: string }) {
   return (
@@ -68,8 +67,8 @@ export default function DashboardPage() {
     try {
       exportFullWorkbook({ cirugias, partos, dip, arepi, registroIaas: iaas }, anio)
       addToast(`Excel ${anio} exportado correctamente`, 'success')
-    } catch {
-      addToast('Error al exportar Excel', 'error')
+    } catch (err) {
+      addToast(`Error al exportar: ${getErrorMessage(err)}`, 'error')
     }
   }
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { where, orderBy, QueryConstraint } from 'firebase/firestore'
 import * as firestoreService from '@/services/firestore'
 import { isFirebaseConfigured } from '@/config/firebase'
+import { getErrorMessage } from '@/utils/errors'
 
 function getLocalKey(collectionName: string, anio?: number) {
   return anio ? `iaas_${collectionName}_${anio}` : `iaas_${collectionName}`
@@ -77,7 +78,7 @@ export function useCollection<T>(
         }
         return firestoreService.create(collectionName, item as unknown as Record<string, unknown>)
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Error al guardar'
+        const msg = getErrorMessage(err)
         setError(msg)
         throw err
       }
@@ -98,7 +99,7 @@ export function useCollection<T>(
         }
         return firestoreService.update(collectionName, id, item as unknown as Record<string, unknown>)
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Error al actualizar'
+        const msg = getErrorMessage(err)
         setError(msg)
         throw err
       }
@@ -119,7 +120,7 @@ export function useCollection<T>(
         }
         return firestoreService.remove(collectionName, id)
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Error al eliminar'
+        const msg = getErrorMessage(err)
         setError(msg)
         throw err
       }

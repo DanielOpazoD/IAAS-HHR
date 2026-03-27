@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useCallback } from 'react'
 import { PartoCesarea } from '@/types'
 import { TIPOS_PARTO } from '@/utils/constants'
-import { formatRut, validateRut } from '@/utils/rut'
 import { getMesFromDate } from '@/utils/dates'
 import { useFormState } from '@/hooks/useFormState'
+import { useRutField } from '@/hooks/useRutField'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
 import FormActions from '@/components/ui/FormActions'
 
@@ -22,7 +22,9 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
     tipo: TIPOS_PARTO[0], conTP: '', fechaPrimerControl: '',
     controlPostParto: '', signosSintomasIAAS: 'NO', dias30: '', observaciones: '',
   })
-  const [rutError, setRutError] = useState('')
+
+  const setRut = useCallback((v: string) => set('rut', v), [set])
+  const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
 
   useEffect(() => {
     if (form.fechaParto) {
@@ -31,22 +33,9 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
     }
   }, [form.fechaParto])
 
-  const handleRutChange = (value: string) => {
-    const formatted = formatRut(value)
-    set('rut', formatted)
-    if (formatted.length >= 3) {
-      setRutError(validateRut(formatted) ? '' : 'RUT inválido')
-    } else {
-      setRutError('')
-    }
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.rut && !validateRut(form.rut)) {
-      setRutError('RUT inválido')
-      return
-    }
+    if (!validateRutField(form.rut)) return
     onSubmit(form)
   }
 
@@ -57,7 +46,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel }: Props) 
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
         </FormField>
         <FormField label="RUT" required error={rutError}>
-          <Input value={form.rut} onChange={(e) => handleRutChange(e.target.value)} placeholder="12.345.678-9" required />
+          <Input value={form.rut} onChange={(e) => handleRutChange(e.target.value)} placeholder="12.345.678-9" required aria-invalid={!!rutError} />
         </FormField>
       </div>
       <div className="grid grid-cols-3 gap-4">
