@@ -160,143 +160,78 @@ export default function ConsolidacionPage() {
   const currentTab = TABS.find((t) => t.id === activeTab)!
 
   return (
-    <div className="flex gap-6 items-start">
-      {/* Panel lateral fijo */}
-      <div className="sticky top-0 w-56 flex-shrink-0">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* Logo y título */}
-          <div className="bg-gradient-to-b from-amber-50 to-white px-5 pt-6 pb-4 text-center">
-            <img
-              src="/logo-iaas.svg"
-              alt="Logo IAAS"
-              className="w-20 h-20 mx-auto mb-3"
-            />
-            <h3 className="text-sm font-bold text-gray-900">Hospital Hanga Roa</h3>
-            <p className="text-[11px] text-gray-500 mt-0.5">Programa IAAS</p>
-            <p className="text-[11px] text-gray-400">Vigilancia Epidemiológica</p>
-          </div>
-
-          <div className="px-4 pb-4 space-y-3">
-            {/* Año */}
-            <div className="text-center">
-              <span className="inline-block bg-primary-50 text-primary-700 text-xs font-semibold px-3 py-1 rounded-full">
-                Periodo {anio}
-              </span>
-            </div>
-
-            {/* Cuatrimestre */}
-            <div>
-              <label className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Cuatrimestre</label>
-              <select
-                value={cuatrimestre}
-                onChange={(e) => setCuatrimestre(Number(e.target.value))}
-                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value={1}>1° Ene - Abr</option>
-                <option value={2}>2° May - Ago</option>
-                <option value={3}>3° Sep - Dic</option>
-              </select>
-            </div>
-
-            {/* Meses del cuatrimestre */}
-            <div>
-              <label className="block text-[11px] font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Meses</label>
-              <div className="flex flex-wrap gap-1">
-                {meses.map((m) => (
-                  <span key={m} className="bg-gray-100 text-gray-600 text-[10px] font-medium px-2 py-0.5 rounded">
-                    {m.slice(0, 3)}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-3">
-              {/* Exportar */}
-              <button
-                onClick={handleExport}
-                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Exportar Excel
-              </button>
-            </div>
-
-            {/* Leyenda */}
-            <div className="border-t border-gray-100 pt-3">
-              <label className="block text-[11px] font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Leyenda Tasas</label>
-              <div className="space-y-1 text-[10px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded bg-green-100 border border-green-200 flex-shrink-0"></span>
-                  <span className="text-gray-600">Bajo IRM</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded bg-yellow-100 border border-yellow-200 flex-shrink-0"></span>
-                  <span className="text-gray-600">Cercano a IRM</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded bg-red-100 border border-red-200 flex-shrink-0"></span>
-                  <span className="text-gray-600">Sobre IRM</span>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div>
+      {/* Header con controles — igual que antes */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Consolidación de Tasas</h2>
+          <p className="text-sm text-gray-500">Hospital Hanga Roa - {anio}</p>
         </div>
-      </div>
-
-      {/* Contenido principal con pestañas */}
-      <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Consolidación de Tasas</h2>
-          <p className="text-sm text-gray-400 mt-0.5">Indicadores de vigilancia epidemiológica</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-5">
-          <div className="flex border-b border-gray-200">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative ${
-                  activeTab === tab.id
-                    ? 'text-primary-700 bg-primary-50/50'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tab.icon} />
-                </svg>
-                <span className="truncate">{tab.label}</span>
-                {activeTab === tab.id && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-600 rounded-full" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab subtitle */}
-          <div className="px-5 py-3 bg-primary-800 text-white flex items-center gap-2">
-            <svg className="w-4 h-4 flex-shrink-0 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={currentTab.icon} />
+        <div className="flex items-center gap-3">
+          <select
+            value={cuatrimestre}
+            onChange={(e) => setCuatrimestre(Number(e.target.value))}
+            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+          >
+            <option value={1}>1° Cuatrimestre (Ene-Abr)</option>
+            <option value={2}>2° Cuatrimestre (May-Ago)</option>
+            <option value={3}>3° Cuatrimestre (Sep-Dic)</option>
+          </select>
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <span className="text-sm font-medium">{currentTab.subtitle}</span>
-          </div>
+            Exportar Excel
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-5">
+        <div className="flex border-b border-gray-200">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative ${
+                activeTab === tab.id
+                  ? 'text-primary-700 bg-primary-50/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tab.icon} />
+              </svg>
+              <span className="truncate">{tab.label}</span>
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-600 rounded-full" />
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Tab content */}
-        {activeTab === 'dip' && (
-          <RateTable indicadores={INDICADORES_DIP} meses={meses} getData={getDipData} rateType="por1000" />
-        )}
-        {activeTab === 'arepi' && (
-          <RateTable indicadores={INDICADORES_AREPI} meses={meses} getData={getArepiData} rateType="por1000" />
-        )}
-        {activeTab === 'cxPartos' && (
-          <RateTable indicadores={INDICADORES_CX_PARTOS} meses={meses} getData={getCxPartosData} rateType="porcentaje" />
-        )}
+        {/* Tab subtitle */}
+        <div className="px-5 py-3 bg-primary-800 text-white flex items-center gap-2">
+          <svg className="w-4 h-4 flex-shrink-0 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={currentTab.icon} />
+          </svg>
+          <span className="text-sm font-medium">{currentTab.subtitle}</span>
+        </div>
       </div>
+
+      {/* Tab content */}
+      {activeTab === 'dip' && (
+        <RateTable indicadores={INDICADORES_DIP} meses={meses} getData={getDipData} rateType="por1000" />
+      )}
+      {activeTab === 'arepi' && (
+        <RateTable indicadores={INDICADORES_AREPI} meses={meses} getData={getArepiData} rateType="por1000" />
+      )}
+      {activeTab === 'cxPartos' && (
+        <RateTable indicadores={INDICADORES_CX_PARTOS} meses={meses} getData={getCxPartosData} rateType="porcentaje" />
+      )}
     </div>
   )
 }
