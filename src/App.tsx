@@ -7,6 +7,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import LoginPage from '@/components/auth/LoginPage'
 import PendingApprovalPage from '@/components/auth/PendingApprovalPage'
 import { getCurrentYear } from '@/utils/dates'
+import LockScreen from '@/components/ui/LockScreen'
 
 // Lazy-loaded pages (code-split per route)
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
@@ -18,6 +19,7 @@ const RegistroIaasPage = lazy(() => import('@/pages/RegistroIaasPage'))
 const ConsolidacionPage = lazy(() => import('@/pages/ConsolidacionPage'))
 const ImportPage = lazy(() => import('@/pages/ImportPage'))
 const AdminUsersPage = lazy(() => import('@/pages/AdminUsersPage'))
+const ConfiguracionPage = lazy(() => import('@/pages/ConfiguracionPage'))
 
 function PageLoader() {
   return (
@@ -50,6 +52,7 @@ function ProtectedApp() {
   if (role === null) return <PendingApprovalPage />
 
   return (
+    <LockScreen>
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route element={<AppLayout anio={anio} onAnioChange={setAnio} />}>
@@ -62,10 +65,12 @@ function ProtectedApp() {
           <Route path="consolidacion" element={<ConsolidacionPage />} />
           <Route path="importar" element={<ImportPage />} />
           <Route path="admin/users" element={<AdminUsersPage />} />
+          <Route path="configuracion" element={<ConfiguracionPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </Suspense>
+    </LockScreen>
   )
 }
 

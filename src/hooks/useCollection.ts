@@ -1,138 +1,86 @@
-import { useState, useEffect, useRef } from 'react'
-import { where, orderBy, QueryConstraint } from 'firebase/firestore'
-import * as firestoreService from '@/services/firestore'
+import { useState, useCallback } from 'react'
 import { isFirebaseConfigured } from '@/config/firebase'
 import { getErrorMessage } from '@/utils/errors'
-import { getLocalKey, loadLocal, saveLocal } from '@/utils/localStorage'
 import { useAuth } from '@/context/AuthContext'
 import { ROLE_PERMISSIONS } from '@/types/roles'
+import { useFirebaseAdapter, useLocalStorageAdapter } from './collectionAdapters'
 
 /**
- * Generic CRUD hook with dual-mode support:
+ * Generic CRUD hook with dual-mode support via Strategy Pattern:
  * - Firebase mode: real-time subscription via Firestore
  * - Demo mode: localStorage fallback when Firebase not configured
  *
+ * The storage strategy is selected once at initialization based on
+ * `isFirebaseConfigured`. Each adapter encapsulates its own state
+ * management and data access, keeping this hook focused on:
+ * 1. Permission checking
+ * 2. Error handling
+ * 3. Providing a stable public API
+ *
  * Returns { data, loading, error, add, update, remove }.
- * React Compiler auto-memoizes the returned functions.
  */
 export function useCollection<T>(
   collectionName: string,
   anio?: number
 ) {
-  const localKey = getLocalKey(collectionName, anio)
   const { user, role } = useAuth()
-
-  // Demo mode: version counter triggers re-reads from localStorage after CRUD ops
-  const versionRef = useRef(0)
-  const [, setVersion] = useState(0)
-
-  const [firebaseData, setFirebaseData] = useState<(T & { id: string })[]>([])
-  const [loading, setLoading] = useState(isFirebaseConfigured)
   const [error, setError] = useState<string | null>(null)
 
-  // Read localStorage data — re-evaluated when version bumps
-  const localData: (T & { id: string })[] = isFirebaseConfigured ? [] : loadLocal<T>(localKey)
-  const data = isFirebaseConfigured ? firebaseData : localData
+  // Strategy selection: adapter handles all data storage concerns
+  const adapter = isFirebaseConfigured
+    ? useFirebaseAdapter<T>(collectionName, anio)
+    : useLocalStorageAdapter<T>(collectionName, anio)
 
-  useEffect(() => {
-    if (!isFirebaseConfigured) return
-
-    const constraints: QueryConstraint[] = []
-    if (anio) {
-      constraints.push(where('anio', '==', anio))
-    }
-    constraints.push(orderBy('createdAt', 'desc'))
-
-    const unsubscribe = firestoreService.subscribe<T>(
-      collectionName,
-      constraints,
-      (items) => {
-        setFirebaseData(items)
-        setLoading(false)
-        setError(null)
-      },
-      (err) => {
-        setError(err.message)
-        setLoading(false)
-      }
-    )
-    return unsubscribe
-  }, [collectionName, anio])
-
-  function checkWritePermission() {
+  const checkWritePermission = useCallback(() => {
     if (role && !ROLE_PERMISSIONS[role].canWrite.includes(collectionName)) {
       throw new Error('No tienes permisos para esta operacion')
     }
-  }
+  }, [role, collectionName])
 
-  const add = async (item: T) => {
+  const add = useCallback(async (item: T) => {
     try {
       setError(null)
       checkWritePermission()
       const uid = user?.uid ?? 'unknown'
-      if (!isFirebaseConfigured) {
-        const newItem = {
-          ...item,
-          id: crypto.randomUUID(),
-          createdAt: new Date().toISOString(),
-          createdBy: uid,
-          updatedBy: uid,
-        } as T & { id: string }
-        const updated = [newItem, ...loadLocal<T>(localKey)]
-        saveLocal(localKey, updated)
-        setVersion(++versionRef.current)
-        return newItem.id
-      }
-      return firestoreService.create(collectionName, {
-        ...(item as unknown as Record<string, unknown>),
-        createdBy: uid,
-        updatedBy: uid,
-      })
+      return await adapter.add(item, uid)
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
     }
-  }
+  }, [checkWritePermission, user?.uid, adapter.add])
 
-  const update = async (id: string, item: Partial<T>) => {
+  const update = useCallback(async (id: string, item: Partial<T>) => {
     try {
       setError(null)
       checkWritePermission()
       const uid = user?.uid ?? 'unknown'
-      if (!isFirebaseConfigured) {
-        const current = loadLocal<T>(localKey)
-        const updated = current.map((d) => d.id === id ? { ...d, ...item, updatedBy: uid } : d)
-        saveLocal(localKey, updated)
-        setVersion(++versionRef.current)
-        return
-      }
-      return firestoreService.update(collectionName, id, {
-        ...(item as unknown as Record<string, unknown>),
-        updatedBy: uid,
-      })
+      await adapter.update(id, item, uid)
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
     }
-  }
+  }, [checkWritePermission, user?.uid, adapter.update])
 
-  const remove = async (id: string) => {
+  const remove = useCallback(async (id: string) => {
     try {
       setError(null)
       checkWritePermission()
-      if (!isFirebaseConfigured) {
-        const current = loadLocal<T>(localKey)
-        const updated = current.filter((d) => d.id !== id)
-        saveLocal(localKey, updated)
-        setVersion(++versionRef.current)
-        return
-      }
-      return firestoreService.remove(collectionName, id)
+      await adapter.remove(id)
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
     }
-  }
+  }, [checkWritePermission, adapter.remove])
 
-  return { data, loading, error, add, update, remove }
+  // Merge adapter error with local error (adapter errors come from Firestore listener)
+  const combinedError = error ?? adapter.error
+
+  return {
+    data: adapter.data,
+    loading: adapter.loading,
+    error: combinedError,
+    add,
+    update,
+    remove,
+  }
 }
