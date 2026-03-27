@@ -27,3 +27,34 @@ body {
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
+
+/* #3 Page transition animation */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition {
+  animation: page-enter 0.25s ease-out;
+}
+
+/* #14 Scroll to top button */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.2s ease-out;
+}
+
+/* #12 Success checkmark animation */
+@keyframes check-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-check {
+  animation: check-pop 0.4s ease-out;
+}

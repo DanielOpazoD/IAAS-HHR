@@ -1,22 +1,26 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
-import { MESES } from '@/utils/constants'
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
+import { useConfirm } from '@/hooks/useConfirm'
+import { useToastContext } from '@/context/ToastContext'
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
+import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
+import { useAuth } from '@/context/AuthContext'
+import { getErrorMessage } from '@/utils/errors'
 import PageHeader from '@/components/layout/PageHeader'
 import DataTable from '@/components/ui/DataTable'
 import Modal from '@/components/ui/Modal'
 import SkeletonTable from '@/components/ui/SkeletonTable'
-import { useConfirm } from '@/hooks/useConfirm'
-import { useToastContext } from '@/context/ToastContext'
-import { getErrorMessage } from '@/utils/errors'
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
-import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
-import { useAuth } from '@/context/AuthContext'
+import FilterBar from '@/components/ui/FilterBar'
 import type { RegistryConfig } from '@/config/registries'
 
 /**
- * Generic CRUD page component. Replaces 5 near-identical page files
- * with a single reusable component driven by a RegistryConfig.
+ * Generic CRUD page component. Driven by a declarative RegistryConfig.
+ *
+ * Responsibilities:
+ * - Orchestrates data flow between collection hook, table, modal, and form
+ * - Delegates filtering to FilterBar, shortcuts to useKeyboardShortcut
  */
 // `any` required: TS interfaces lack index signatures needed by Record<string, unknown>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,21 +30,22 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   const writable = canWriteFn(config.collectionName)
   const { anio } = useOutletContext<{ anio: number }>()
   const { data, loading, add, update, remove } = useCollection<T>(config.collectionName, anio)
+
+  // UI state
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<(T & { id: string }) | undefined>()
   const [filterMes, setFilterMes] = useState('')
   const [filterSecondary, setFilterSecondary] = useState('')
   const [saving, setSaving] = useState(false)
   const [formValues, setFormValues] = useState<{ rut?: string; mes?: string }>({})
+
   const { confirm, ConfirmDialog } = useConfirm()
   const { addToast } = useToastContext()
-
-  // Warn user about unsaved changes when modal is open
   useUnsavedChanges(modalOpen)
 
-  // Check for duplicate records
   const duplicateWarning = useDuplicateCheck(data as Array<Record<string, unknown>>, formValues, editing?.id)
 
+  // Filtering
   const filtered = data.filter((d) => {
     const rec = d as Record<string, unknown>
     if (config.hasMonthFilter && filterMes && rec[config.filterKey || 'mes'] !== filterMes) return false
@@ -50,6 +55,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
 
   const nextNumero = config.getNextNumero?.(data)
 
+  // CRUD handlers
   const handleSubmit = async (formData: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) => {
     setSaving(true)
     try {
@@ -89,6 +95,15 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
     }
   }
 
+  const handleExport = () => {
+    try {
+      config.exportFn(filtered, anio)
+      addToast('Excel exportado correctamente', 'success')
+    } catch (err) {
+      addToast(`Error al exportar: ${getErrorMessage(err)}`, 'error')
+    }
+  }
+
   const openNew = useCallback(() => {
     setEditing(undefined)
     setModalOpen(true)
@@ -100,16 +115,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   }
 
   // Keyboard shortcut: Ctrl+N to add new record
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !modalOpen) {
-        e.preventDefault()
-        openNew()
-      }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [modalOpen, openNew])
+  useKeyboardShortcut('n', openNew, { ctrl: true, disabled: modalOpen || !writable })
 
   if (loading) {
     return (
@@ -121,6 +127,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   }
 
   const { FormComponent } = config
+  const showFilters = config.hasMonthFilter || config.secondaryFilter
 
   return (
     <>
@@ -128,44 +135,20 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         title={config.title}
         subtitle={config.subtitle(anio)}
         onAdd={writable ? openNew : undefined}
-        onExport={() => {
-          try {
-            config.exportFn(filtered, anio)
-            addToast('Excel exportado correctamente', 'success')
-          } catch (err) {
-            addToast(`Error al exportar: ${getErrorMessage(err)}`, 'error')
-          }
-        }}
+        onExport={handleExport}
       />
 
-      {(config.hasMonthFilter || config.secondaryFilter) && (
-        <div className="mb-4 flex items-center gap-3">
-          {config.hasMonthFilter && (
-            <select
-              value={filterMes}
-              onChange={(e) => setFilterMes(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-            >
-              <option value="">Todos los meses</option>
-              {MESES.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          )}
-          {config.secondaryFilter && (
-            <select
-              value={filterSecondary}
-              onChange={(e) => setFilterSecondary(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-            >
-              <option value="">{`Todos: ${config.secondaryFilter.label}`}</option>
-              {config.secondaryFilter.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          )}
-          {(filterMes || filterSecondary) && (
-            <span className="text-xs text-gray-500">
-              {filtered.length} de {data.length} registros
-            </span>
-          )}
-        </div>
+      {showFilters && (
+        <FilterBar
+          hasMonthFilter={config.hasMonthFilter}
+          filterMes={filterMes}
+          onFilterMesChange={setFilterMes}
+          secondaryFilter={config.secondaryFilter}
+          filterSecondary={filterSecondary}
+          onFilterSecondaryChange={setFilterSecondary}
+          filteredCount={filtered.length}
+          totalCount={data.length}
+        />
       )}
 
       <DataTable

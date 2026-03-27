@@ -1,13 +1,17 @@
-import { useState, useMemo, useEffect, useCallback, FormEvent } from 'react'
+import { useMemo, useEffect, useCallback, FormEvent } from 'react'
 import { DispositivoInvasivo, PeriodoDIP } from '@/types'
 import { TIPOS_DIP, SERVICIOS, MESES } from '@/utils/constants'
 import { getMesFromDate, calcDaysBetween } from '@/utils/dates'
+import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
 import { useFormChangeNotify } from '@/hooks/useFormChangeNotify'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
 import FormActions from '@/components/ui/FormActions'
 
 type FormData = Omit<DispositivoInvasivo, 'id' | 'createdAt' | 'updatedAt'>
+
+const MAX_PERIODOS = 4
+const emptyPeriodo: PeriodoDIP = { fechaInstalacion: '', fechaRetiro: '', numDias: null }
 
 interface Props {
   initial?: DispositivoInvasivo
@@ -18,37 +22,33 @@ interface Props {
   onFormChange?: (values: { rut?: string; mes?: string }) => void
 }
 
-const emptyPeriodo: PeriodoDIP = { fechaInstalacion: '', fechaRetiro: '', numDias: null }
-
 export default function DipForm({ initial, anio, onSubmit, onCancel, loading, onFormChange }: Props) {
-  const [form, setForm] = useState<FormData>({
-    mes: initial?.mes || '',
-    anio: initial?.anio || anio,
-    servicio: initial?.servicio || SERVICIOS[0],
-    nombre: initial?.nombre || '',
-    rut: initial?.rut || '',
-    edad: initial?.edad || '',
-    tipoDIP: initial?.tipoDIP || TIPOS_DIP[0],
-    periodos: initial?.periodos?.length ? initial.periodos : [{ ...emptyPeriodo }],
-    totalDias: initial?.totalDias || 0,
-    revisionFC: initial?.revisionFC || '',
+  const { form, setForm, set } = useFormState<FormData>(initial, {
+    mes: '',
+    anio,
+    servicio: SERVICIOS[0],
+    nombre: '',
+    rut: '',
+    edad: '',
+    tipoDIP: TIPOS_DIP[0],
+    periodos: [{ ...emptyPeriodo }],
+    totalDias: 0,
+    revisionFC: '',
   })
 
-  const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }))
-
-  const setRut = useCallback((v: string) => set('rut', v), [])
+  const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
 
   /**
    * Stable dependency key for periodos date changes.
-   * Prevents the old bug where .map().join() in useEffect deps created a
-   * new string every render, causing infinite re-render loops.
+   * Prevents infinite re-render loops from .map().join() in deps.
    */
   const periodosKey = useMemo(
     () => form.periodos.map((p) => `${p.fechaInstalacion}|${p.fechaRetiro}`).join(','),
     [form.periodos]
   )
 
+  // Recalculate days when periodo dates change
   useEffect(() => {
     const periodos = form.periodos.map((p) => ({
       ...p,
@@ -59,6 +59,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel, loading, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [periodosKey])
 
+  // Auto-month from first periodo's installation date
   useEffect(() => {
     if (form.periodos[0]?.fechaInstalacion) {
       const mes = getMesFromDate(form.periodos[0].fechaInstalacion)
@@ -76,16 +77,19 @@ export default function DipForm({ initial, anio, onSubmit, onCancel, loading, on
   }
 
   const addPeriodo = () => {
-    if (form.periodos.length < 4) setForm((f) => ({ ...f, periodos: [...f.periodos, { ...emptyPeriodo }] }))
+    if (form.periodos.length < MAX_PERIODOS) {
+      setForm((f) => ({ ...f, periodos: [...f.periodos, { ...emptyPeriodo }] }))
+    }
   }
 
   const removePeriodo = (idx: number) => {
-    if (form.periodos.length > 1) setForm((f) => ({ ...f, periodos: f.periodos.filter((_, i) => i !== idx) }))
+    if (form.periodos.length > 1) {
+      setForm((f) => ({ ...f, periodos: f.periodos.filter((_, i) => i !== idx) }))
+    }
   }
 
   useFormChangeNotify({ rut: form.rut, mes: form.mes }, onFormChange)
 
-  /** Validate that no period has fechaRetiro before fechaInstalacion */
   const dateErrors = useMemo(() => {
     return form.periodos.map((p) => {
       if (p.fechaInstalacion && p.fechaRetiro && p.fechaRetiro < p.fechaInstalacion) {
@@ -139,7 +143,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel, loading, on
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">Períodos de Instalación</label>
-          {form.periodos.length < 4 && (
+          {form.periodos.length < MAX_PERIODOS && (
             <button type="button" onClick={addPeriodo} className="text-xs text-primary-600 hover:text-primary-700">+ Agregar período</button>
           )}
         </div>

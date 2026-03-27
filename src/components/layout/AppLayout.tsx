@@ -3,6 +3,8 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import OnlineStatus from '@/components/ui/OnlineStatus'
+import ScrollToTop from '@/components/ui/ScrollToTop'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 interface AppLayoutProps {
   anio: number
@@ -11,6 +13,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
   const location = useLocation()
+  usePageTitle()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem('iaas_sidebar_collapsed') === 'true' } catch { return false }
   })
@@ -64,7 +67,10 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
         />
         <OnlineStatus />
         <main id="main-content" className="flex-1 p-4 md:p-6 overflow-auto" tabIndex={-1}>
-          <Outlet context={{ anio }} />
+          <div key={location.pathname} className="page-transition">
+            <Outlet context={{ anio }} />
+          </div>
+          <ScrollToTop />
         </main>
       </div>
     </div>

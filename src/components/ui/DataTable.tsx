@@ -1,4 +1,4 @@
-import { ReactNode, useState, useMemo } from 'react'
+import { ReactNode, useState, useMemo, useEffect } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 
 interface Column<T> {
@@ -79,10 +79,11 @@ export default function DataTable<T extends { id?: string }>({
     return result
   }, [data, debouncedSearch, searchKeys, sortKey, sortDir])
 
-  // Reset page when filters change
+  // Reset page when data/filters change
   const totalPages = Math.max(1, Math.ceil(processed.length / pageSize))
-  const safePage = Math.min(page, totalPages - 1)
-  if (safePage !== page) setPage(safePage)
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, Math.max(0, totalPages - 1)))
+  }, [totalPages])
 
   const paginatedData = useMemo(() => {
     if (processed.length <= pageSize) return processed
@@ -93,10 +94,13 @@ export default function DataTable<T extends { id?: string }>({
   if (data.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center" data-testid="empty-state">
-        <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-        </svg>
-        <p className="text-gray-400 font-medium" data-testid="empty-message">{emptyMessage}</p>
+        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <p className="text-gray-500 font-semibold mb-1" data-testid="empty-message">{emptyMessage}</p>
+        <p className="text-xs text-gray-300">Los registros apareceran aqui al ser agregados</p>
       </div>
     )
   }

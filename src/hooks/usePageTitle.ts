@@ -1,0 +1,27 @@
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+
+const ROUTE_TITLES: Record<string, string> = {
+  '/': 'Dashboard',
+  '/cirugias': 'Cirugias Trazadoras',
+  '/partos': 'Partos / Cesarea',
+  '/dip': 'DIP',
+  '/arepi': 'AREpi',
+  '/registro-iaas': 'Registro IAAS',
+  '/consolidacion': 'Consolidacion de Tasas',
+  '/importar': 'Importar Excel',
+  '/admin/users': 'Usuarios',
+  '/configuracion': 'Configuracion',
+}
+
+const BASE_TITLE = 'IAAS - Hospital Hanga Roa'
+
+/** Updates document.title based on current route */
+export function usePageTitle() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    const pageTitle = ROUTE_TITLES[pathname]
+    document.title = pageTitle ? `${pageTitle} | ${BASE_TITLE}` : BASE_TITLE
+  }, [pathname])
+}
