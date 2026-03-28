@@ -7,94 +7,90 @@ service cloud.firestore {
     // Helper functions
     // -------------------------------------------------------------------------
 
-    /** Only authenticated users can access the database */
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    /** Returns true if the requesting user's role document grants write access */
     function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
-    /** Admin can write to any collection */
     function isAdmin() {
       return getUserRole() == 'admin';
     }
 
     /** Año must be a realistic hospital year (2015-2035) */
-    function validAnio(anio) {
-      return anio is int && anio >= 2015 && anio <= 2035;
+    function validAnio() {
+      return request.resource.data.anio is int
+        && request.resource.data.anio >= 2015
+        && request.resource.data.anio <= 2035;
     }
 
-    /** Valid user roles — null means pending approval */
     function isValidRole(role) {
       return role == null || role == 'admin' || role == 'pabellon' || role == 'matronas';
     }
 
     // -------------------------------------------------------------------------
-    // User profiles — users can read their own; only admin can write
+    // User profiles
     // -------------------------------------------------------------------------
     match /users/{uid} {
       allow read: if isAuthenticated() && request.auth.uid == uid;
-      // Admin can update profiles, but only to valid role values.
       allow write: if isAuthenticated() && isAdmin()
         && isValidRole(request.resource.data.get('role', null));
-      // Allow creating own profile on first login.
-      // role must be null (pending) — prevents self-granting admin on creation.
       allow create: if isAuthenticated()
         && request.auth.uid == uid
         && (!('role' in request.resource.data) || request.resource.data.role == null);
     }
 
     // -------------------------------------------------------------------------
-    // Per-year subcollections: /cirugias/{anio}/records/{id}
+    // Clinical data — flat collections with anio field
+    // The app uses collection(db, 'cirugias') with where('anio', '==', year)
     // -------------------------------------------------------------------------
 
-    match /cirugias/{anio}/records/{id} {
+    match /cirugias/{id} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && validAnio(int(anio))
+      allow create: if isAuthenticated() && validAnio()
+        && (isAdmin() || getUserRole() == 'pabellon');
+      allow update, delete: if isAuthenticated()
         && (isAdmin() || getUserRole() == 'pabellon');
     }
 
-    match /dip/{anio}/records/{id} {
+    match /dip/{id} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && validAnio(int(anio))
+      allow create: if isAuthenticated() && validAnio()
+        && (isAdmin() || getUserRole() == 'pabellon');
+      allow update, delete: if isAuthenticated()
         && (isAdmin() || getUserRole() == 'pabellon');
     }
 
-    match /partos/{anio}/records/{id} {
+    match /partos/{id} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && validAnio(int(anio))
+      allow create: if isAuthenticated() && validAnio()
+        && (isAdmin() || getUserRole() == 'matronas');
+      allow update, delete: if isAuthenticated()
         && (isAdmin() || getUserRole() == 'matronas');
     }
 
-    match /arepi/{anio}/records/{id} {
+    match /arepi/{id} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && validAnio(int(anio))
-        && isAdmin();
+      allow create: if isAuthenticated() && validAnio() && isAdmin();
+      allow update, delete: if isAuthenticated() && isAdmin();
     }
 
-    match /registroIaas/{anio}/records/{id} {
+    match /registroIaas/{id} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && validAnio(int(anio))
-        && isAdmin();
+      allow create: if isAuthenticated() && validAnio() && isAdmin();
+      allow update, delete: if isAuthenticated() && isAdmin();
     }
 
-    match /consolidacion/{anio}/records/{id} {
+    match /consolidacion/{id} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && validAnio(int(anio))
-        && isAdmin();
+      allow create: if isAuthenticated() && validAnio() && isAdmin();
+      allow update, delete: if isAuthenticated() && isAdmin();
     }
 
     // -------------------------------------------------------------------------
-    // Deny all other paths by default
+    // Deny all other paths
     // -------------------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
