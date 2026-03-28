@@ -1,5 +1,5 @@
 import XLSX from 'xlsx-js-style'
-import { MESES } from '@/utils/constants'
+import { MESES, type Mes } from '@/utils/constants'
 import { validateRut, formatRut } from '@/utils/rut'
 import type {
   CirugiaTrazadora,
@@ -74,10 +74,10 @@ function toDateStr(val: CellValue): string {
   return String(val)
 }
 
-function normMes(val: CellValue): string {
+function normMes(val: CellValue): Mes | '' {
   if (!val) return ''
   const s = String(val).trim()
-  return MESES.find((m) => m.toLowerCase() === s.toLowerCase()) || s
+  return MESES.find((m) => m.toLowerCase() === s.toLowerCase()) ?? (s as Mes)
 }
 
 function inferAnio(ws: XLSX.WorkSheet): number {
@@ -181,7 +181,7 @@ function parseCirugias(ws: XLSX.WorkSheet): { data: (CirugiaTrazadora & { id: st
 
       data.push({
         id: crypto.randomUUID(),
-        mes: normMes(row[0]),
+        mes: normMes(row[0]) as Mes,
         anio,
         nombre,
         rut: sanitizeRut(row[2]),
@@ -214,7 +214,7 @@ function parsePartos(ws: XLSX.WorkSheet): { data: (PartoCesarea & { id: string }
 
       data.push({
         id: crypto.randomUUID(),
-        mes: normMes(row[0]),
+        mes: normMes(row[0]) as Mes,
         anio,
         nombre,
         rut: sanitizeRut(row[2]),
@@ -276,7 +276,7 @@ function parseDIP(ws: XLSX.WorkSheet): { data: (DispositivoInvasivo & { id: stri
 
       data.push({
         id: crypto.randomUUID(),
-        mes: normMes(row[0]),
+        mes: normMes(row[0]) as Mes,
         anio,
         servicio: sanitizeStr(row[1], 100),
         nombre,
@@ -339,7 +339,7 @@ function parseRegistroIAAS(ws: XLSX.WorkSheet): { data: (RegistroIAAS & { id: st
       data.push({
         id: crypto.randomUUID(),
         numero: clampNum(row[0], 1, 9999) ?? data.length + 1,
-        mes: normMes(row[1]),
+        mes: normMes(row[1]) as Mes,
         anio,
         nombre,
         rut: sanitizeRut(row[3]),

@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToastContext } from '@/context/ToastContext'
-import { isAdminRole } from '@/types/roles'
+import { isAdminRole, ROLE_PERMISSIONS, type UserProfile, type UserRole } from '@/types/roles'
 import * as userService from '@/services/userService'
-import { ROLE_PERMISSIONS } from '@/types/roles'
-import type { UserProfile, UserRole } from '@/types/roles'
 import { getErrorMessage } from '@/utils/errors'
 
 const roleOptions = Object.entries(ROLE_PERMISSIONS).map(([key, val]) => ({

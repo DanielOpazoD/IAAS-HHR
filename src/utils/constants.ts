@@ -12,6 +12,9 @@ export const MESES = [
   'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ] as const
 
+/** Union type of valid Spanish month names. Prevents storing invalid values like 'Enro'. */
+export type Mes = typeof MESES[number]
+
 export const MESES_CORTOS = [
   'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',

@@ -36,15 +36,8 @@
     # - img-src 'self' data: blob: https://lh3.googleusercontent.com: Google OAuth avatars
     # - font-src 'self': local fonts only
     # - frame-ancestors 'none': no iframing (redundant with X-Frame-Options, defence in depth)
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src 'self' 'unsafe-inline';
-      style-src 'self' 'unsafe-inline';
-      connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com;
-      img-src 'self' data: blob: https://lh3.googleusercontent.com;
-      font-src 'self';
-      frame-ancestors 'none';
-    """
+    # Single line — HTTP headers cannot contain literal newlines
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com; img-src 'self' data: blob: https://lh3.googleusercontent.com; font-src 'self'; frame-ancestors 'none';"
 
 # Cache static assets aggressively (Vite fingerprints filenames)
 [[headers]]

@@ -1,6 +1,6 @@
 import { useCallback, FormEvent } from 'react'
 import { CirugiaTrazadora } from '@/types'
-import { TIPOS_CIRUGIA, MESES } from '@/utils/constants'
+import { TIPOS_CIRUGIA, MESES, type Mes } from '@/utils/constants'
 import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
 import { useAutoMonth } from '@/hooks/useAutoMonth'
@@ -21,7 +21,7 @@ interface Props {
 
 export default function CirugiaForm({ initial, anio, onSubmit, onCancel, loading, onFormChange }: Props) {
   const { form, set } = useFormState<FormData>(initial, {
-    mes: '', anio, nombre: '', rut: '', fechaCirugia: '',
+    mes: '' as Mes, anio, nombre: '', rut: '', fechaCirugia: '',
     tipoCirugia: TIPOS_CIRUGIA[0], fechaPrimerControl: '', observaciones: '',
     iho: 'NO', fechaSegundoControl: '', observaciones2: '',
   })
@@ -29,7 +29,7 @@ export default function CirugiaForm({ initial, anio, onSubmit, onCancel, loading
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
 
-  const setMes = useCallback((m: string) => set('mes', m), [set])
+  const setMes = useCallback((m: Mes) => set('mes', m), [set])
   useAutoMonth(form.fechaCirugia, form.mes, setMes)
   useFormChangeNotify({ rut: form.rut, mes: form.mes }, onFormChange)
 
@@ -59,7 +59,7 @@ export default function CirugiaForm({ initial, anio, onSubmit, onCancel, loading
           </Select>
         </FormField>
         <FormField label="Mes">
-          <Select value={form.mes} onChange={(e) => set('mes', e.target.value)}>
+          <Select value={form.mes} onChange={(e) => set('mes', e.target.value as Mes)}>
             <option value="">Auto</option>
             {MESES.map((m) => <option key={m} value={m}>{m}</option>)}
           </Select>

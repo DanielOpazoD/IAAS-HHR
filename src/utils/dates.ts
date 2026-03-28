@@ -1,11 +1,11 @@
-import { MESES } from './constants'
+import { MESES, type Mes } from './constants'
 
 /**
  * Derives the month name from a YYYY-MM-DD date string.
  * Parses the string directly to avoid timezone issues
  * (e.g., '2026-01-01' being interpreted as Dec 31 in UTC-3).
  */
-export function getMesFromDate(dateStr: string): string {
+export function getMesFromDate(dateStr: string): Mes | '' {
   if (!dateStr) return ''
   const parts = dateStr.split('-')
   const monthIdx = parseInt(parts[1], 10) - 1

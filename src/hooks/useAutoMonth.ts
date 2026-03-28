@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { getMesFromDate } from '@/utils/dates'
+import type { Mes } from '@/utils/constants'
 
 /**
  * Automatically derives 'mes' from a date field value.
@@ -11,8 +12,8 @@ import { getMesFromDate } from '@/utils/dates'
  */
 export function useAutoMonth(
   dateValue: string,
-  currentMes: string,
-  setMes: (mes: string) => void
+  currentMes: Mes | '',
+  setMes: (mes: Mes) => void
 ): void {
   useEffect(() => {
     if (dateValue) {

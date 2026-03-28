@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore'
+import type { Mes } from '@/utils/constants'
 
 /** Base fields shared by all records (audit trail) */
 export interface BaseRecord {
@@ -14,7 +15,7 @@ export type SavedRecord<T extends BaseRecord> = T & { id: string }
 
 /** Cirugías Trazadoras - Tracer surgery tracking */
 export interface CirugiaTrazadora extends BaseRecord {
-  mes: string
+  mes: Mes
   anio: number
   nombre: string
   rut: string
@@ -29,7 +30,7 @@ export interface CirugiaTrazadora extends BaseRecord {
 
 /** Partos/Cesárea - Puerperal endometritis tracking */
 export interface PartoCesarea extends BaseRecord {
-  mes: string
+  mes: Mes
   anio: number
   nombre: string
   rut: string
@@ -52,7 +53,7 @@ export interface PeriodoDIP {
 
 /** DIP - Permanent Invasive Devices (CVC, CUP, VMI) */
 export interface DispositivoInvasivo extends BaseRecord {
-  mes: string
+  mes: Mes
   anio: number
   servicio: string
   nombre: string
@@ -79,7 +80,7 @@ export interface AgenteRiesgoEpidemico extends BaseRecord {
 /** Master IAAS infection registry */
 export interface RegistroIAAS extends BaseRecord {
   numero: number
-  mes: string
+  mes: Mes
   anio: number
   nombre: string
   rut: string

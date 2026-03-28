@@ -18,6 +18,12 @@ import { useFirebaseAdapter, useLocalStorageAdapter } from './collectionAdapters
  * 3. Providing a stable public API
  *
  * Returns { data, loading, error, add, update, remove }.
+ *
+ * @knownlimitation Subscription deduplication: each hook instance creates its
+ * own localStorage read or Firestore subscription. If two components mount with
+ * the same (collectionName, anio) simultaneously, they run parallel reads.
+ * For the current scale (~200-500 records/year) this is acceptable.
+ * Future improvement: add a module-level Map<key, subscriber> with ref-counting.
  */
 export function useCollection<T>(
   collectionName: string,

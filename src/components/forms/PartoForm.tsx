@@ -1,6 +1,6 @@
 import { useCallback, FormEvent } from 'react'
 import { PartoCesarea } from '@/types'
-import { TIPOS_PARTO } from '@/utils/constants'
+import { TIPOS_PARTO, type Mes } from '@/utils/constants'
 import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
 import { useAutoMonth } from '@/hooks/useAutoMonth'
@@ -21,7 +21,7 @@ interface Props {
 
 export default function PartoForm({ initial, anio, onSubmit, onCancel, loading, onFormChange }: Props) {
   const { form, set } = useFormState<FormData>(initial, {
-    mes: '', anio, nombre: '', rut: '', fechaParto: '',
+    mes: '' as Mes, anio, nombre: '', rut: '', fechaParto: '',
     tipo: TIPOS_PARTO[0], conTP: '', fechaPrimerControl: '',
     controlPostParto: '', signosSintomasIAAS: 'NO', dias30: '', observaciones: '',
   })
@@ -29,7 +29,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel, loading, 
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
 
-  const setMes = useCallback((m: string) => set('mes', m), [set])
+  const setMes = useCallback((m: Mes) => set('mes', m), [set])
   useAutoMonth(form.fechaParto, form.mes, setMes)
   useFormChangeNotify({ rut: form.rut, mes: form.mes }, onFormChange)
 
