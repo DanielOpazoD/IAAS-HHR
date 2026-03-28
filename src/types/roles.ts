@@ -3,6 +3,14 @@ export type UserRole = 'admin' | 'pabellon' | 'matronas'
 /** Valid collection names used throughout the app */
 export type CollectionName = 'cirugias' | 'partos' | 'dip' | 'arepi' | 'registroIaas' | 'consolidacion'
 
+/** Shape of a sidebar navigation item */
+export interface NavItem {
+  to: string
+  label: string
+  icon: string
+  collection: CollectionName | undefined
+}
+
 export interface UserProfile {
   uid: string
   email: string

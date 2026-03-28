@@ -56,6 +56,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         {config.hasMonthFilter && (
           <>
             <select
+              id="header-month-select"
+              aria-label="Filtrar por mes"
               value={filterMes}
               onChange={(e) => setFilterMes(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"

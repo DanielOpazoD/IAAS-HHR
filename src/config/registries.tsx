@@ -48,7 +48,7 @@ export interface RegistryConfig<T extends BaseRecord> {
   exportFn: (data: (T & { id: string })[], anio: number) => void
   wideModal?: boolean
   hasMonthFilter?: boolean
-  filterKey?: string
+  filterKey?: keyof T & string
   /** Additional filter (e.g. surgery type) */
   secondaryFilter?: FilterDef
   getNextNumero?: (data: (T & { id: string })[]) => number
@@ -143,7 +143,6 @@ export const arepiConfig: RegistryConfig<AgenteRiesgoEpidemico> = {
   collectionName: 'arepi',
   title: 'Agentes de Riesgo Epidémico (AREpi)',
   entityName: { singular: 'AREpi', plural: 'agentes' },
-  hasMonthFilter: false,
   FormComponent: ArepiForm,
   exportFn: exportArepi,
   columns: [

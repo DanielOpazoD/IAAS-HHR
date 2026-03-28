@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { canWriteCollection, type CollectionName } from '@/types/roles'
-
-type NavItem = { to: string; label: string; icon: string; collection: CollectionName | undefined }
+import { canWriteCollection, type NavItem } from '@/types/roles'
 
 const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1', collection: undefined },

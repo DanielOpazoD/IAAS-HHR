@@ -29,8 +29,9 @@ export default function Header({ anio, onAnioChange, onMenuToggle }: HeaderProps
             </svg>
           </button>
         )}
-        <label className="text-sm text-gray-400 font-medium">Año</label>
+        <label htmlFor="header-year-select" className="text-sm text-gray-400 font-medium">Año</label>
         <select
+          id="header-year-select"
           value={anio}
           onChange={(e) => onAnioChange(Number(e.target.value))}
           className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
