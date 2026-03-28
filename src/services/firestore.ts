@@ -134,6 +134,10 @@ export async function batchCreate<T extends Record<string, unknown>>(
  * Subscribes to real-time updates on a Firestore collection.
  * Returns an unsubscribe function to stop listening.
  *
+ * With IndexedDB persistence enabled, onSnapshot fires twice on load:
+ * 1. Immediately with cached data (fromCache = true) → instant UI
+ * 2. When server data arrives (fromCache = false) → fresh data
+ *
  * @param collectionName - Firestore collection path
  * @param constraints - Query filters (where, orderBy, etc.)
  * @param callback - Called with updated data on each snapshot
@@ -142,7 +146,7 @@ export async function batchCreate<T extends Record<string, unknown>>(
 export function subscribe<T>(
   collectionName: string,
   constraints: QueryConstraint[],
-  callback: (data: (T & { id: string })[]) => void,
+  callback: (data: (T & { id: string })[], fromCache: boolean) => void,
   onError: (error: Error) => void = (err) => console.error(`[Firestore] ${collectionName}:`, err)
 ): () => void {
   const q = query(collection(getDb(), collectionName), ...constraints)
@@ -150,7 +154,7 @@ export function subscribe<T>(
     q,
     (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as T & { id: string }))
-      callback(data)
+      callback(data, snapshot.metadata.fromCache)
     },
     onError
   )

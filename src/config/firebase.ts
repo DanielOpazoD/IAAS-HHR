@@ -1,5 +1,5 @@
 import { initializeApp, FirebaseApp } from 'firebase/app'
-import { getFirestore, Firestore } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, Firestore } from 'firebase/firestore'
 import type { Auth } from 'firebase/auth'
 
 /** True when Firebase env vars are present (false = demo/localStorage mode) */
@@ -20,7 +20,13 @@ let auth: Auth | null = null
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig)
-  db = getFirestore(app)
+  // Enable IndexedDB persistence for offline-first / stale-while-revalidate:
+  // - onSnapshot fires immediately with cached data (instant UI)
+  // - then fires again when server data arrives (background sync)
+  // - works fully offline (critical for remote island hospital)
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  })
 }
 
 export { app, db, auth }

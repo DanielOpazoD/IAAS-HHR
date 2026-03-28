@@ -30,6 +30,7 @@ export function useFirebaseAdapter<T>(
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    setLoading(true)
     const constraints: QueryConstraint[] = []
     if (anio) {
       constraints.push(where('anio', '==', anio))
@@ -39,8 +40,14 @@ export function useFirebaseAdapter<T>(
     const unsubscribe = firestoreService.subscribe<T>(
       collectionName,
       constraints,
-      (items) => {
+      (items, fromCache) => {
         setData(items)
+        // With IndexedDB persistence:
+        // - First callback is cached data (instant) → stop loading immediately
+        // - Second callback is server data → UI updates seamlessly
+        // Without cache (first visit), fromCache=false on first response
+        // Either way, we stop loading on the first callback
+        void fromCache
         setLoading(false)
         setError(null)
       },
