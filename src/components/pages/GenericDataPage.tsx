@@ -11,6 +11,7 @@ import { getErrorMessage } from '@/utils/errors'
 import { MESES } from '@/utils/constants'
 import PageHeader from '@/components/layout/PageHeader'
 import DataTable from '@/components/ui/DataTable'
+import Icon from '@/components/ui/Icon'
 import SkeletonTable from '@/components/ui/SkeletonTable'
 import FilterBar from '@/components/ui/FilterBar'
 import GenericDataModal from '@/components/pages/GenericDataModal'
@@ -67,9 +68,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
           </>
         )}
         <div className="relative">
-          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <Icon name="search" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Buscar..."
@@ -84,9 +83,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
               className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               aria-label="Limpiar búsqueda"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <Icon name="close" className="w-3.5 h-3.5" />
             </button>
           )}
         </div>

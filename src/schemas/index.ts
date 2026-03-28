@@ -10,7 +10,7 @@ const dateOrEmpty = z.string().refine(
   { message: 'Debe ser una fecha YYYY-MM-DD o vacío' },
 )
 
-const mesSchema = z.enum(MESES)
+const mesSchema = z.enum(MESES).or(z.literal(''))
 
 const siNoEmpty = z.enum(['SI', 'NO', ''])
 const sexoSchema = z.enum(['M', 'F', ''])
@@ -77,7 +77,7 @@ export const dipSchema = z.object({
 export const arepiSchema = z.object({
   fechaVE: dateOrEmpty,
   anio: anioSchema,
-  servicioClinico: z.string(),
+  servicioClinico: z.enum(SERVICIOS),
   nombre: nombreSchema,
   edad: z.string(),
   rut: rutSchema,

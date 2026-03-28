@@ -4,6 +4,8 @@ import { TIPOS_DIP, SERVICIOS, MESES, type Mes } from '@/utils/constants'
 import { getMesFromDate, calcDaysBetween } from '@/utils/dates'
 import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
+import { useFormValidation } from '@/hooks/useFormValidation'
+import { dipSchema } from '@/schemas'
 import { useFormChangeNotify } from '@/hooks/useFormChangeNotify'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
 import FormActions from '@/components/ui/FormActions'
@@ -38,6 +40,7 @@ export default function DipForm({ initial, anio, onSubmit, onCancel, loading, on
 
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
+  const { validate, getError } = useFormValidation(dipSchema)
 
   /**
    * Stable dependency key for periodos date changes.
@@ -105,13 +108,14 @@ export default function DipForm({ initial, anio, onSubmit, onCancel, loading, on
     e.preventDefault()
     if (!validateRutField(form.rut)) return
     if (hasDateErrors) return
+    if (!validate(form)) return
     onSubmit(form)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Nombre del Paciente" required>
+        <FormField label="Nombre del Paciente" required error={getError('nombre') || undefined}>
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
         </FormField>
         <FormField label="RUT" required error={rutError}>

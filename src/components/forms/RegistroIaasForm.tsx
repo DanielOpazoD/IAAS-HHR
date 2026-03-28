@@ -3,6 +3,8 @@ import { RegistroIAAS } from '@/types'
 import { type Mes } from '@/utils/constants'
 import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
+import { useFormValidation } from '@/hooks/useFormValidation'
+import { registroIaasSchema } from '@/schemas'
 import { useAutoMonth } from '@/hooks/useAutoMonth'
 import { useFormChangeNotify } from '@/hooks/useFormChangeNotify'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
@@ -31,6 +33,7 @@ export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubm
 
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
+  const { validate, getError } = useFormValidation(registroIaasSchema)
 
   const setMes = useCallback((m: Mes) => set('mes', m), [set])
   useAutoMonth(form.fechaIngreso, form.mes, setMes)
@@ -39,6 +42,7 @@ export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubm
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!validateRutField(form.rut)) return
+    if (!validate(form)) return
     onSubmit(form)
   }
 
@@ -48,7 +52,7 @@ export default function RegistroIaasForm({ initial, anio, nextNumero = 1, onSubm
         <FormField label="N°">
           <Input type="number" value={form.numero} onChange={(e) => set('numero', parseInt(e.target.value) || 0)} />
         </FormField>
-        <FormField label="Nombre del Paciente" required>
+        <FormField label="Nombre del Paciente" required error={getError('nombre') || undefined}>
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
         </FormField>
         <FormField label="RUT" required error={rutError}>

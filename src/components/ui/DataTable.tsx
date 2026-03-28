@@ -1,5 +1,6 @@
 import { ReactNode, useState, useMemo, useEffect } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
+import Icon from '@/components/ui/Icon'
 
 interface Column<T> {
   key: string
@@ -104,9 +105,7 @@ export default function DataTable<T extends { id?: string }>({
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center" data-testid="empty-state">
         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+          <Icon name="document" className="w-10 h-10 text-gray-300" strokeWidth={1} />
         </div>
         <p className="text-gray-500 font-semibold mb-1" data-testid="empty-message">{emptyMessage}</p>
         <p className="text-xs text-gray-300">Los registros apareceran aqui al ser agregados</p>
@@ -120,9 +119,7 @@ export default function DataTable<T extends { id?: string }>({
       {searchable && !isControlled && data.length > 3 && (
         <div className="px-4 py-3 border-b border-gray-100">
           <div className="relative max-w-xs">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar por nombre o RUT..."
@@ -136,9 +133,7 @@ export default function DataTable<T extends { id?: string }>({
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
                 aria-label="Limpiar búsqueda"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <Icon name="close" className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -162,9 +157,7 @@ export default function DataTable<T extends { id?: string }>({
                   <span className="inline-flex items-center gap-1">
                     {col.label}
                     {sortKey === col.key && (
-                      <svg className={`w-3 h-3 ${sortDir === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                      </svg>
+                      <Icon name="chevron-up" className={`w-3 h-3 ${sortDir === 'desc' ? 'rotate-180' : ''}`} />
                     )}
                   </span>
                 </th>
@@ -195,9 +188,7 @@ export default function DataTable<T extends { id?: string }>({
                           aria-label="Editar registro"
                           data-testid="btn-edit"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Icon name="edit" className="w-4 h-4" />
                         </button>
                       )}
                       {onDelete && (
@@ -208,9 +199,7 @@ export default function DataTable<T extends { id?: string }>({
                           aria-label="Eliminar registro"
                           data-testid="btn-delete"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Icon name="trash" className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -247,9 +236,7 @@ export default function DataTable<T extends { id?: string }>({
                 className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-gray-100"
                 aria-label="Pagina anterior"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                <Icon name="chevron-left" className="w-4 h-4" />
               </button>
               <span className="text-xs text-gray-500 font-medium min-w-[3rem] text-center">{page + 1} / {totalPages}</span>
               <button
@@ -258,9 +245,7 @@ export default function DataTable<T extends { id?: string }>({
                 className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed rounded hover:bg-gray-100"
                 aria-label="Pagina siguiente"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <Icon name="chevron-right" className="w-4 h-4" />
               </button>
             </div>
           )}

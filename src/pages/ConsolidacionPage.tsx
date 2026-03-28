@@ -1,10 +1,9 @@
 import { APP_CONFIG } from '@/utils/constants'
-import { useState, useMemo, useCallback, memo } from 'react'
+import { useState, memo } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { useCollection } from '@/hooks/useCollection'
 import { useToastContext } from '@/context/ToastContext'
-import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, DatosConsolidacion } from '@/types'
-import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS, CX_PARTOS_SOURCE_MAP } from '@/utils/constants'
+import { useConsolidacionData } from '@/hooks/useConsolidacionData'
+import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
 import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '@/utils/rates'
 import { getErrorMessage } from '@/utils/errors'
 import { exportConsolidacion } from '@/services/excel/consolidacionExport'
@@ -101,51 +100,7 @@ export default function ConsolidacionPage() {
   const [activeTab, setActiveTab] = useState<TabId>('dip')
   const meses = MESES_POR_CUATRIMESTRE[cuatrimestre]
 
-  const { data: cirugias } = useCollection<CirugiaTrazadora>('cirugias', anio)
-  const { data: partos } = useCollection<PartoCesarea>('partos', anio)
-  const { data: dip } = useCollection<DispositivoInvasivo>('dip', anio)
-  const { data: consolidacion } = useCollection<DatosConsolidacion>('consolidacion', anio)
-
-  const manualData = useMemo(
-    () => consolidacion.find((c) => c.cuatrimestre === cuatrimestre),
-    [consolidacion, cuatrimestre]
-  )
-
-  const getDipData = useCallback((indId: string, mes: string) => {
-    const manual = manualData?.dipData?.[indId]?.[mes]
-    if (manual) return { infecciones: manual.infecciones, denominador: manual.diasExposicion }
-
-    const tipoDIP = indId.startsWith('its_') ? 'CVC' :
-                    indId.startsWith('navm_') ? 'VMI' : 'CUP'
-    const mesDip = dip.filter((d) => d.mes === mes && d.tipoDIP === tipoDIP)
-    return {
-      infecciones: 0,
-      denominador: mesDip.reduce((sum, d) => sum + (d.totalDias || 0), 0),
-    }
-  }, [manualData, dip])
-
-  const getArepiData = useCallback((indId: string, mes: string) => {
-    const manual = manualData?.arepiData?.[indId]?.[mes]
-    if (manual) return { infecciones: manual.infecciones, denominador: manual.diasExposicion }
-    return { infecciones: 0, denominador: 0 }
-  }, [manualData])
-
-  const getCxPartosData = useCallback((indId: string, mes: string) => {
-    const manual = manualData?.cxPartosData?.[indId]?.[mes]
-    if (manual) return { infecciones: manual.infecciones, denominador: manual.procedimientosVigilados }
-
-    const source = CX_PARTOS_SOURCE_MAP[indId]
-    if (!source) return { infecciones: 0, denominador: 0 }
-
-    if (source.type === 'cirugia') {
-      const cx = cirugias.filter((c) => c.mes === mes && c.tipoCirugia === source.tipoCirugia)
-      return { infecciones: cx.filter((c) => c[source.ihoField] === 'SI').length, denominador: cx.length }
-    }
-
-    // source.type === 'parto'
-    const p = partos.filter((pt) => pt.mes === mes && pt.tipo === source.tipoParto && (!source.conTP || pt.conTP === source.conTP))
-    return { infecciones: p.filter((pt) => pt[source.iaasField] === 'SI').length, denominador: p.length }
-  }, [manualData, cirugias, partos])
+  const { getDipData, getArepiData, getCxPartosData } = useConsolidacionData(anio, cuatrimestre)
 
   const { addToast } = useToastContext()
 

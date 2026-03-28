@@ -3,6 +3,8 @@ import { PartoCesarea } from '@/types'
 import { TIPOS_PARTO, type Mes } from '@/utils/constants'
 import { useFormState } from '@/hooks/useFormState'
 import { useRutField } from '@/hooks/useRutField'
+import { useFormValidation } from '@/hooks/useFormValidation'
+import { partoSchema } from '@/schemas'
 import { useAutoMonth } from '@/hooks/useAutoMonth'
 import { useFormChangeNotify } from '@/hooks/useFormChangeNotify'
 import FormField, { Input, Select, Textarea } from '@/components/ui/FormField'
@@ -28,6 +30,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel, loading, 
 
   const setRut = useCallback((v: string) => set('rut', v), [set])
   const { error: rutError, handleChange: handleRutChange, validate: validateRutField } = useRutField(setRut)
+  const { validate, getError } = useFormValidation(partoSchema)
 
   const setMes = useCallback((m: Mes) => set('mes', m), [set])
   useAutoMonth(form.fechaParto, form.mes, setMes)
@@ -36,13 +39,14 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel, loading, 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!validateRutField(form.rut)) return
+    if (!validate(form)) return
     onSubmit(form)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Nombre del Paciente" required>
+        <FormField label="Nombre del Paciente" required error={getError('nombre') || undefined}>
           <Input value={form.nombre} onChange={(e) => set('nombre', e.target.value)} required />
         </FormField>
         <FormField label="RUT" required error={rutError}>
@@ -50,7 +54,7 @@ export default function PartoForm({ initial, anio, onSubmit, onCancel, loading, 
         </FormField>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        <FormField label="Fecha Parto/Cesárea">
+        <FormField label="Fecha Parto/Cesárea" error={getError('fechaParto') || undefined}>
           <Input type="date" value={form.fechaParto} onChange={(e) => set('fechaParto', e.target.value)} required />
         </FormField>
         <FormField label="Tipo">

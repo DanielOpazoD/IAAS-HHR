@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import Icon from '@/components/ui/Icon'
 import { useCollection } from '@/hooks/useCollection'
 import { useToastContext } from '@/context/ToastContext'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, AgenteRiesgoEpidemico, RegistroIAAS } from '@/types'
@@ -85,9 +86,7 @@ export default function DashboardPage() {
           disabled={totalRegistros === 0}
           className="inline-flex items-center gap-2.5 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 shadow-sm hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+          <Icon name="download" className="w-5 h-5" />
           Descargar Excel {anio}
         </button>
       </div>
@@ -132,7 +131,7 @@ export default function DashboardPage() {
             )}
             {ihoCount === 0 && iaasPartos === 0 && fallecidos === 0 && (
               <div className="flex items-center gap-2.5 text-sm p-3 bg-green-50 rounded-xl text-green-700 font-medium">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                <Icon name="check" className="w-5 h-5" />
                 Sin alertas activas
               </div>
             )}
@@ -143,7 +142,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center">
-              <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              <Icon name="chart" className="w-4 h-4 text-primary-600" />
             </div>
             <h3 className="font-semibold text-gray-900">Registros por Mes</h3>
           </div>
