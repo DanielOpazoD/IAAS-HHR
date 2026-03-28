@@ -11,6 +11,14 @@ export interface UserProfile {
   createdAt: string
 }
 
+/**
+ * Returns true if the given role has write access to the collection.
+ * Centralizes the permission check to avoid repeated type assertions.
+ */
+export function canWriteCollection(role: UserRole, collection: string): boolean {
+  return ROLE_PERMISSIONS[role].canWrite.includes(collection as CollectionName)
+}
+
 /** Which collections each role can read/write */
 export const ROLE_PERMISSIONS: Record<UserRole, {
   canWrite: CollectionName[]

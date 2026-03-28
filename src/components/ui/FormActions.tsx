@@ -15,6 +15,7 @@ export default function FormActions({ onCancel, isEditing, submitLabel, loading 
   // Detect transition from loading=true to loading=false (successful save)
   useEffect(() => {
     if (loading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: tracks prop transition
       setWasLoading(true)
     } else if (wasLoading) {
       setShowSuccess(true)

@@ -90,6 +90,7 @@ export default function DataTable<T extends { id?: string }>({
   // Reset page when data/filters change
   const totalPages = Math.max(1, Math.ceil(processed.length / pageSize))
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clamp page when filter reduces total
     setPage((prev) => Math.min(prev, Math.max(0, totalPages - 1)))
   }, [totalPages])
 

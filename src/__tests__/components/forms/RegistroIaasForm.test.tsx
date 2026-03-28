@@ -51,6 +51,7 @@ describe('RegistroIaasForm', () => {
       indicacionInstalacion: 'Retención', indicacionRetiro: 'Alta',
       responsable: 'Dr. Test', observaciones: 'Obs',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<RegistroIaasForm {...defaultProps} initial={initial} />)
     expect(screen.getByTestId('btn-submit')).toHaveTextContent('Actualizar')
@@ -70,6 +71,7 @@ describe('RegistroIaasForm', () => {
       indicacionInstalacion: 'VM', indicacionRetiro: 'Extubación',
       responsable: 'Dra. Garcia', observaciones: 'Cultivo positivo',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<RegistroIaasForm {...defaultProps} initial={initial} />)
     expect(screen.getByDisplayValue('Pedro Soto')).toBeInTheDocument()

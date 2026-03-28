@@ -1,5 +1,6 @@
 import XLSX from 'xlsx-js-style'
 import { MESES } from '@/utils/constants'
+import { validateRut, formatRut } from '@/utils/rut'
 import type {
   CirugiaTrazadora,
   PartoCesarea,
@@ -11,6 +12,52 @@ import type {
 
 /** Excel cell value (string, number, Date, boolean, or null) */
 type CellValue = string | number | boolean | Date | null | undefined
+
+// ---------------------------------------------------------------------------
+// Sanitization helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a trimmed string capped at maxLen characters.
+ * Prevents unbounded text from malformed Excel files.
+ */
+function sanitizeStr(val: CellValue, maxLen = 200): string {
+  if (val == null) return ''
+  return String(val).trim().slice(0, maxLen)
+}
+
+/**
+ * Returns val if it exists in the allowed list, otherwise returns ''.
+ * Used to enforce enum-like fields (sexo, tipoCirugia, etc.).
+ */
+function validateEnum(val: string, allowed: readonly string[]): string {
+  return allowed.includes(val) ? val : ''
+}
+
+/**
+ * Clamps a numeric value to [min, max]. Returns null if val is not a number.
+ */
+function clampNum(val: CellValue, min: number, max: number): number | null {
+  if (typeof val !== 'number' || isNaN(val)) return null
+  return Math.min(max, Math.max(min, Math.round(val)))
+}
+
+/**
+ * Validates and formats a RUT. Returns the formatted RUT if valid, '' otherwise.
+ */
+function sanitizeRut(val: CellValue): string {
+  const raw = sanitizeStr(val, 20)
+  if (!raw) return ''
+  if (!validateRut(raw)) {
+    console.warn(`[excelImport] RUT inválido ignorado: ${raw}`)
+    return raw // keep the value but warn — don't silently drop patient data
+  }
+  return formatRut(raw)
+}
+
+// ---------------------------------------------------------------------------
+// Existing helpers (unchanged)
+// ---------------------------------------------------------------------------
 
 function toDateStr(val: CellValue): string {
   if (!val) return ''
@@ -31,11 +78,6 @@ function normMes(val: CellValue): string {
   if (!val) return ''
   const s = String(val).trim()
   return MESES.find((m) => m.toLowerCase() === s.toLowerCase()) || s
-}
-
-function str(val: CellValue): string {
-  if (val == null) return ''
-  return String(val).trim()
 }
 
 function inferAnio(ws: XLSX.WorkSheet): number {
@@ -81,6 +123,30 @@ export interface ImportResult {
   anio: number
 }
 
+// ---------------------------------------------------------------------------
+// Allowed values for enum fields
+// ---------------------------------------------------------------------------
+
+const TIPOS_CIRUGIA = [
+  'Colecistectomía Laparoscópica',
+  'Colecistectomía Laparotómica',
+  'Cesárea',
+  'Hernia Inguinal c/s malla',
+  'Cataratas c/s LIO',
+] as const
+
+const TIPOS_PARTO = ['Parto vaginal', 'Cesárea'] as const
+
+const TIPOS_DIP = ['CVC', 'VMI', 'CUP'] as const
+
+const VALORES_SI_NO = ['SI', 'NO', ''] as const
+
+const SEXOS = ['M', 'F', 'Masculino', 'Femenino', ''] as const
+
+// ---------------------------------------------------------------------------
+// Normalizers
+// ---------------------------------------------------------------------------
+
 function normTipoCirugia(val: string): string {
   const lower = val.toLowerCase()
   if (lower.includes('laparoscópica') || lower.includes('laparoscopica')) return 'Colecistectomía Laparoscópica'
@@ -88,199 +154,223 @@ function normTipoCirugia(val: string): string {
   if (lower.includes('cesárea') || lower.includes('cesarea') || lower.includes('césarea')) return 'Cesárea'
   if (lower.includes('hernia')) return 'Hernia Inguinal c/s malla'
   if (lower.includes('catarata')) return 'Cataratas c/s LIO'
-  return val
+  // If still unrecognized, validate against whitelist
+  return validateEnum(val, TIPOS_CIRUGIA) || val
 }
 
 function normTipoParto(val: string): string {
   const lower = val.toLowerCase()
   if (lower.includes('vaginal')) return 'Parto vaginal'
   if (lower.includes('cesárea') || lower.includes('cesarea') || lower.includes('césarea')) return 'Cesárea'
-  return val
+  return validateEnum(val, TIPOS_PARTO) || val
 }
 
+// ---------------------------------------------------------------------------
+// Parsers — each wrapped in try-catch so one bad sheet can't block the rest
+// ---------------------------------------------------------------------------
+
 function parseCirugias(ws: XLSX.WorkSheet): { data: (CirugiaTrazadora & { id: string })[]; anio: number } {
-  const anio = inferAnio(ws)
-  const rows = getRows(ws, 2) // skip header row (row 0=title, row 1=headers)
-  const data: (CirugiaTrazadora & { id: string })[] = []
+  try {
+    const anio = inferAnio(ws)
+    const rows = getRows(ws, 2)
+    const data: (CirugiaTrazadora & { id: string })[] = []
 
-  for (const row of rows) {
-    const mes = normMes(row[0])
-    const nombre = str(row[1])
-    if (!nombre) continue
+    for (const row of rows) {
+      const nombre = sanitizeStr(row[1])
+      if (!nombre) continue
 
-    data.push({
-      id: crypto.randomUUID(),
-      mes,
-      anio,
-      nombre,
-      rut: str(row[2]),
-      fechaCirugia: toDateStr(row[3]),
-      tipoCirugia: normTipoCirugia(str(row[4])),
-      fechaPrimerControl: toDateStr(row[5]),
-      observaciones: str(row[6]),
-      iho: str(row[7]) || '',
-      fechaSegundoControl: toDateStr(row[8]),
-      observaciones2: str(row[9]),
-      createdAt: new Date().toISOString(),
-    })
+      data.push({
+        id: crypto.randomUUID(),
+        mes: normMes(row[0]),
+        anio,
+        nombre,
+        rut: sanitizeRut(row[2]),
+        fechaCirugia: toDateStr(row[3]),
+        tipoCirugia: normTipoCirugia(sanitizeStr(row[4])),
+        fechaPrimerControl: toDateStr(row[5]),
+        observaciones: sanitizeStr(row[6], 500),
+        iho: validateEnum(sanitizeStr(row[7]).toUpperCase(), VALORES_SI_NO) || '',
+        fechaSegundoControl: toDateStr(row[8]),
+        observaciones2: sanitizeStr(row[9], 500),
+        createdAt: new Date().toISOString(),
+      })
+    }
+    return { data, anio }
+  } catch (err) {
+    console.warn('[excelImport] Error al parsear hoja Cirugías:', err)
+    return { data: [], anio: new Date().getFullYear() }
   }
-  return { data, anio }
 }
 
 function parsePartos(ws: XLSX.WorkSheet): { data: (PartoCesarea & { id: string })[]; anio: number } {
-  const anio = inferAnio(ws)
-  const rows = getRows(ws, 3) // row 0=title, row 1=blank, row 2=headers
-  const data: (PartoCesarea & { id: string })[] = []
+  try {
+    const anio = inferAnio(ws)
+    const rows = getRows(ws, 3)
+    const data: (PartoCesarea & { id: string })[] = []
 
-  for (const row of rows) {
-    const mes = normMes(row[0])
-    const nombre = str(row[1])
-    if (!nombre) continue
+    for (const row of rows) {
+      const nombre = sanitizeStr(row[1])
+      if (!nombre) continue
 
-    data.push({
-      id: crypto.randomUUID(),
-      mes,
-      anio,
-      nombre,
-      rut: str(row[2]),
-      fechaParto: toDateStr(row[3]),
-      tipo: normTipoParto(str(row[4])),
-      conTP: str(row[5]),
-      fechaPrimerControl: toDateStr(row[6]),
-      controlPostParto: str(row[7]),
-      signosSintomasIAAS: str(row[8]),
-      dias30: str(row[9]),
-      observaciones: str(row[10]),
-      createdAt: new Date().toISOString(),
-    })
+      data.push({
+        id: crypto.randomUUID(),
+        mes: normMes(row[0]),
+        anio,
+        nombre,
+        rut: sanitizeRut(row[2]),
+        fechaParto: toDateStr(row[3]),
+        tipo: normTipoParto(sanitizeStr(row[4])),
+        conTP: sanitizeStr(row[5], 50),
+        fechaPrimerControl: toDateStr(row[6]),
+        controlPostParto: sanitizeStr(row[7], 500),
+        signosSintomasIAAS: sanitizeStr(row[8], 500),
+        dias30: sanitizeStr(row[9], 50),
+        observaciones: sanitizeStr(row[10], 500),
+        createdAt: new Date().toISOString(),
+      })
+    }
+    return { data, anio }
+  } catch (err) {
+    console.warn('[excelImport] Error al parsear hoja Partos:', err)
+    return { data: [], anio: new Date().getFullYear() }
   }
-  return { data, anio }
 }
 
 function parseDIP(ws: XLSX.WorkSheet): { data: (DispositivoInvasivo & { id: string })[]; anio: number } {
-  const anio = inferAnio(ws)
-  const rows = getRows(ws, 3) // row 0=title, row 1=DIP headers, row 2=column headers
-  const data: (DispositivoInvasivo & { id: string })[] = []
+  try {
+    const anio = inferAnio(ws)
+    const rows = getRows(ws, 3)
+    const data: (DispositivoInvasivo & { id: string })[] = []
 
-  for (const row of rows) {
-    const mes = normMes(row[0])
-    const nombre = str(row[2])
-    if (!nombre) continue
+    for (const row of rows) {
+      const nombre = sanitizeStr(row[2])
+      if (!nombre) continue
 
-    const periodos: PeriodoDIP[] = []
-    // DIP 1: cols G(6), H(7), I(8)
-    // DIP 2: cols J(9), K(10), L(11)
-    // DIP 3: cols M(12), N(13), O(14)
-    // DIP 4: cols P(15), Q(16), R(17)
-    const periodCols = [
-      [6, 7, 8],
-      [9, 10, 11],
-      [12, 13, 14],
-      [15, 16, 17],
-    ]
+      const periodos: PeriodoDIP[] = []
+      const periodCols = [
+        [6, 7, 8],
+        [9, 10, 11],
+        [12, 13, 14],
+        [15, 16, 17],
+      ]
 
-    for (const [instCol, retCol, diasCol] of periodCols) {
-      const fi = toDateStr(row[instCol])
-      const fr = toDateStr(row[retCol])
-      const dias = row[diasCol]
-      if (fi || fr || (typeof dias === 'number' && dias > 0)) {
-        periodos.push({
-          fechaInstalacion: fi,
-          fechaRetiro: fr,
-          numDias: typeof dias === 'number' && dias > 0 ? dias : null,
-        })
+      for (const [instCol, retCol, diasCol] of periodCols) {
+        const fi = toDateStr(row[instCol])
+        const fr = toDateStr(row[retCol])
+        const dias = row[diasCol]
+        if (fi || fr || (typeof dias === 'number' && dias > 0)) {
+          periodos.push({
+            fechaInstalacion: fi,
+            fechaRetiro: fr,
+            numDias: clampNum(dias, 0, 3650),
+          })
+        }
       }
+
+      if (periodos.length === 0) {
+        periodos.push({ fechaInstalacion: toDateStr(row[6]), fechaRetiro: toDateStr(row[7]), numDias: null })
+      }
+
+      const rawTotalDias = typeof row[18] === 'number' ? row[18] : periodos.reduce((s, p) => s + (p.numDias || 0), 0)
+      const totalDias = clampNum(rawTotalDias, 0, 3650) ?? 0
+
+      data.push({
+        id: crypto.randomUUID(),
+        mes: normMes(row[0]),
+        anio,
+        servicio: sanitizeStr(row[1], 100),
+        nombre,
+        rut: sanitizeRut(row[3]),
+        edad: sanitizeStr(row[4], 10),
+        tipoDIP: validateEnum(sanitizeStr(row[5]), TIPOS_DIP) || sanitizeStr(row[5], 10),
+        periodos,
+        totalDias,
+        revisionFC: sanitizeStr(row[19], 500),
+        createdAt: new Date().toISOString(),
+      })
     }
-
-    // If no periods parsed but there's days in col I, create one period
-    if (periodos.length === 0) {
-      const fi = toDateStr(row[6])
-      const fr = toDateStr(row[7])
-      periodos.push({ fechaInstalacion: fi, fechaRetiro: fr, numDias: null })
-    }
-
-    const totalDias = typeof row[18] === 'number' ? row[18] : periodos.reduce((s, p) => s + (p.numDias || 0), 0)
-
-    data.push({
-      id: crypto.randomUUID(),
-      mes,
-      anio,
-      servicio: str(row[1]),
-      nombre,
-      rut: str(row[3]),
-      edad: str(row[4]),
-      tipoDIP: str(row[5]),
-      periodos,
-      totalDias,
-      revisionFC: str(row[19]),
-      createdAt: new Date().toISOString(),
-    })
+    return { data, anio }
+  } catch (err) {
+    console.warn('[excelImport] Error al parsear hoja DIP:', err)
+    return { data: [], anio: new Date().getFullYear() }
   }
-  return { data, anio }
 }
 
 function parseArepi(ws: XLSX.WorkSheet): { data: (AgenteRiesgoEpidemico & { id: string })[]; anio: number } {
-  const anio = inferAnio(ws)
-  const rows = getRows(ws, 3)
-  const data: (AgenteRiesgoEpidemico & { id: string })[] = []
+  try {
+    const anio = inferAnio(ws)
+    const rows = getRows(ws, 3)
+    const data: (AgenteRiesgoEpidemico & { id: string })[] = []
 
-  for (const row of rows) {
-    const nombre = str(row[2])
-    if (!nombre) continue
+    for (const row of rows) {
+      const nombre = sanitizeStr(row[2])
+      if (!nombre) continue
 
-    data.push({
-      id: crypto.randomUUID(),
-      fechaVE: toDateStr(row[0]),
-      anio,
-      servicioClinico: str(row[1]),
-      nombre,
-      edad: str(row[3]),
-      rut: str(row[4]),
-      tipoVigilancia: str(row[5]),
-      criteriosEpidemiologicos: str(row[6]),
-      createdAt: new Date().toISOString(),
-    })
+      data.push({
+        id: crypto.randomUUID(),
+        fechaVE: toDateStr(row[0]),
+        anio,
+        servicioClinico: sanitizeStr(row[1], 100),
+        nombre,
+        edad: sanitizeStr(row[3], 10),
+        rut: sanitizeRut(row[4]),
+        tipoVigilancia: sanitizeStr(row[5], 100),
+        criteriosEpidemiologicos: sanitizeStr(row[6], 500),
+        createdAt: new Date().toISOString(),
+      })
+    }
+    return { data, anio }
+  } catch (err) {
+    console.warn('[excelImport] Error al parsear hoja AREpi:', err)
+    return { data: [], anio: new Date().getFullYear() }
   }
-  return { data, anio }
 }
 
 function parseRegistroIAAS(ws: XLSX.WorkSheet): { data: (RegistroIAAS & { id: string })[]; anio: number } {
-  const anio = inferAnio(ws)
-  const rows = getRows(ws, 1) // row 0=headers
-  const data: (RegistroIAAS & { id: string })[] = []
+  try {
+    const anio = inferAnio(ws)
+    const rows = getRows(ws, 1)
+    const data: (RegistroIAAS & { id: string })[] = []
 
-  for (const row of rows) {
-    const nombre = str(row[2])
-    if (!nombre) continue
+    for (const row of rows) {
+      const nombre = sanitizeStr(row[2])
+      if (!nombre) continue
 
-    data.push({
-      id: crypto.randomUUID(),
-      numero: typeof row[0] === 'number' ? row[0] : data.length + 1,
-      mes: normMes(row[1]),
-      anio,
-      nombre,
-      rut: str(row[3]),
-      sexo: str(row[4]),
-      fechaIngreso: toDateStr(row[5]),
-      fechaInstalacion: toDateStr(row[6]),
-      fechaDiagCx: toDateStr(row[7]),
-      diasInvasivo: typeof row[8] === 'number' ? row[8] : null,
-      iaas: str(row[9]),
-      fallecido: str(row[10]),
-      fechaCultivo: toDateStr(row[11]),
-      agente: str(row[12]),
-      diagnostico: str(row[13]),
-      indicacionInstalacion: str(row[14]),
-      indicacionRetiro: str(row[15]),
-      responsable: str(row[16]),
-      observaciones: str(row[17]),
-      createdAt: new Date().toISOString(),
-    })
+      data.push({
+        id: crypto.randomUUID(),
+        numero: clampNum(row[0], 1, 9999) ?? data.length + 1,
+        mes: normMes(row[1]),
+        anio,
+        nombre,
+        rut: sanitizeRut(row[3]),
+        sexo: validateEnum(sanitizeStr(row[4], 10), SEXOS) || sanitizeStr(row[4], 10),
+        fechaIngreso: toDateStr(row[5]),
+        fechaInstalacion: toDateStr(row[6]),
+        fechaDiagCx: toDateStr(row[7]),
+        diasInvasivo: clampNum(row[8], 0, 365),
+        iaas: sanitizeStr(row[9], 200),
+        fallecido: validateEnum(sanitizeStr(row[10]).toUpperCase(), VALORES_SI_NO) || sanitizeStr(row[10], 10),
+        fechaCultivo: toDateStr(row[11]),
+        agente: sanitizeStr(row[12], 200),
+        diagnostico: sanitizeStr(row[13], 500),
+        indicacionInstalacion: sanitizeStr(row[14], 500),
+        indicacionRetiro: sanitizeStr(row[15], 500),
+        responsable: sanitizeStr(row[16], 200),
+        observaciones: sanitizeStr(row[17], 500),
+        createdAt: new Date().toISOString(),
+      })
+    }
+    return { data, anio }
+  } catch (err) {
+    console.warn('[excelImport] Error al parsear hoja Registro IAAS:', err)
+    return { data: [], anio: new Date().getFullYear() }
   }
-  return { data, anio }
 }
 
-// Sheet name matching (flexible)
+// ---------------------------------------------------------------------------
+// Sheet finder & public entry point
+// ---------------------------------------------------------------------------
+
 function findSheet(wb: XLSX.WorkBook, keywords: string[]): XLSX.WorkSheet | null {
   for (const name of wb.SheetNames) {
     const lower = name.toLowerCase()

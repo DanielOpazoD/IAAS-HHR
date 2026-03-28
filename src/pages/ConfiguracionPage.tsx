@@ -15,6 +15,7 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     const stored = localStorage.getItem(PIN_STORAGE_KEY)
     const enabled = localStorage.getItem(LOCK_ENABLED_KEY) === 'true'
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reads localStorage once on mount
     setHasExistingPin(!!stored)
     setLockEnabled(enabled)
   }, [])

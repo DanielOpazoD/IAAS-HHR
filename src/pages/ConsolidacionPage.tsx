@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { useToastContext } from '@/context/ToastContext'
@@ -16,7 +16,7 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id']
 
-function RateTable({
+const RateTable = memo(function RateTable({
   indicadores,
   meses,
   getData,
@@ -92,7 +92,7 @@ function RateTable({
       </div>
     </div>
   )
-}
+})
 
 export default function ConsolidacionPage() {
   const { anio } = useOutletContext<{ anio: number }>()

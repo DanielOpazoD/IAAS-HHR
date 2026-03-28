@@ -1,3 +1,9 @@
+/**
+ * Formats a raw RUT string into the standard Chilean format XX.XXX.XXX-Y.
+ * Accepts digits and the letter K in any format and returns a formatted RUT.
+ * @param value - Raw input string (e.g. "12345678k" or "12.345.678-K")
+ * @returns Formatted RUT string (e.g. "12.345.678-K")
+ */
 export function formatRut(value: string): string {
   const clean = value.replace(/[^0-9kK]/g, '').toUpperCase()
   if (clean.length <= 1) return clean
@@ -7,6 +13,12 @@ export function formatRut(value: string): string {
   return `${formatted}-${dv}`
 }
 
+/**
+ * Validates a Chilean RUT using the official modulus-11 algorithm.
+ * Accepts formatted or unformatted RUTs (dots, dashes and spaces are stripped).
+ * @param rut - RUT string in any format (e.g. "12.345.678-K" or "12345678k")
+ * @returns `true` if the check digit is correct, `false` otherwise
+ */
 export function validateRut(rut: string): boolean {
   const clean = rut.replace(/[^0-9kK]/g, '').toUpperCase()
   if (clean.length < 2) return false
@@ -23,6 +35,12 @@ export function validateRut(rut: string): boolean {
   return dv === dvExpected
 }
 
+/**
+ * Strips all formatting characters from a RUT string, leaving only digits and K.
+ * Converts lowercase k to uppercase K.
+ * @param rut - RUT string in any format (e.g. "12.345.678-k")
+ * @returns Clean RUT string (e.g. "12345678K")
+ */
 export function cleanRut(rut: string): string {
   return rut.replace(/[^0-9kK]/g, '').toUpperCase()
 }

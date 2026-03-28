@@ -38,6 +38,7 @@ describe('ArepiForm', () => {
       nombre: 'Test', edad: '55a', rut: '12.345.678-5',
       tipoVigilancia: 'Respiratoria', criteriosEpidemiologicos: 'Fiebre',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<ArepiForm {...defaultProps} initial={initial} />)
     expect(screen.getByTestId('btn-submit')).toHaveTextContent('Actualizar')
@@ -54,6 +55,7 @@ describe('ArepiForm', () => {
       nombre: 'Ana Torres', edad: '45a', rut: '11.222.333-4',
       tipoVigilancia: 'Respiratoria', criteriosEpidemiologicos: 'Fiebre alta',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<ArepiForm {...defaultProps} initial={initial} />)
     expect(screen.getByDisplayValue('Ana Torres')).toBeInTheDocument()

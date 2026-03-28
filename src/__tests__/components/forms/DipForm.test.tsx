@@ -43,6 +43,7 @@ describe('DipForm', () => {
       periodos: [{ fechaInstalacion: '2026-01-01', fechaRetiro: '2026-01-05', numDias: 4 }],
       totalDias: 4, revisionFC: '',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<DipForm {...defaultProps} initial={initial} />)
     expect(screen.getByTestId('btn-submit')).toHaveTextContent('Actualizar')
@@ -60,6 +61,7 @@ describe('DipForm', () => {
       periodos: [{ fechaInstalacion: '2026-01-01', fechaRetiro: '2026-01-05', numDias: 4 }],
       totalDias: 4, revisionFC: 'Revisado',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<DipForm {...defaultProps} initial={initial} />)
     expect(screen.getByDisplayValue('Carlos Diaz')).toBeInTheDocument()

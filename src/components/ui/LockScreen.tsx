@@ -53,6 +53,19 @@ export default function LockScreen({ children }: { children: React.ReactNode }) 
     }
   }, [locked])
 
+  // Focus trap: while locked, Tab always returns focus to the PIN input
+  useEffect(() => {
+    if (!locked) return
+    const trap = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', trap)
+    return () => document.removeEventListener('keydown', trap)
+  }, [locked])
+
   const handleUnlock = async () => {
     const storedHash = localStorage.getItem(PIN_STORAGE_KEY)
     const inputHash = await hashPin(pin)

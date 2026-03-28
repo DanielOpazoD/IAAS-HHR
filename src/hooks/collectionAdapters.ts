@@ -89,6 +89,7 @@ export function useLocalStorageAdapter<T>(
   // Keep version in scope so React knows data depends on it
   void version
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- setVersion is stable; ref mutation intentional
   const bumpVersion = useCallback(() => {
     setVersion(++versionRef.current)
   }, [])

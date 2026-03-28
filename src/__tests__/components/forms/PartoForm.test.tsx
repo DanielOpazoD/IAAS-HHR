@@ -42,6 +42,7 @@ describe('PartoForm', () => {
       fechaPrimerControl: '', controlPostParto: '', signosSintomasIAAS: 'NO',
       dias30: '', observaciones: '',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<PartoForm {...defaultProps} initial={initial} />)
     expect(screen.getByTestId('btn-submit')).toHaveTextContent('Actualizar')
@@ -59,6 +60,7 @@ describe('PartoForm', () => {
       fechaPrimerControl: '2026-01-17', controlPostParto: 'Normal',
       signosSintomasIAAS: 'NO', dias30: 'Sin eventos', observaciones: 'Obs test',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<PartoForm {...defaultProps} initial={initial} />)
     expect(screen.getByDisplayValue('Maria Lopez')).toBeInTheDocument()

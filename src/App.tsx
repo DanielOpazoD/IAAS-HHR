@@ -2,7 +2,7 @@ import { useState, lazy, Suspense, ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
-import { ROLE_PERMISSIONS } from '@/types/roles'
+import { canWriteCollection } from '@/types/roles'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import AppLayout from '@/components/layout/AppLayout'
 import LoginPage from '@/components/auth/LoginPage'
@@ -36,7 +36,7 @@ function PageLoader() {
 function RoleRoute({ collection, adminOnly, children }: { collection?: string; adminOnly?: boolean; children: ReactNode }) {
   const { role } = useAuth()
   if (adminOnly && role !== 'admin') return <Navigate to="/" replace />
-  if (collection && role && role !== 'admin' && !(ROLE_PERMISSIONS[role].canWrite as string[]).includes(collection)) {
+  if (collection && role && role !== 'admin' && !canWriteCollection(role, collection)) {
     return <Navigate to="/" replace />
   }
   return <>{children}</>

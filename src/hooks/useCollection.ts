@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { isFirebaseConfigured } from '@/config/firebase'
 import { getErrorMessage } from '@/utils/errors'
 import { useAuth } from '@/context/AuthContext'
-import { ROLE_PERMISSIONS } from '@/types/roles'
+import { canWriteCollection } from '@/types/roles'
 import { useFirebaseAdapter, useLocalStorageAdapter } from './collectionAdapters'
 
 /**
@@ -26,13 +26,16 @@ export function useCollection<T>(
   const { user, role } = useAuth()
   const [error, setError] = useState<string | null>(null)
 
-  // Strategy selection: adapter handles all data storage concerns
+  // Strategy selection: isFirebaseConfigured is a module-level constant (set once at startup,
+  // never changes at runtime), so both branches always resolve to the same hook on every render.
+  /* eslint-disable react-hooks/rules-of-hooks */
   const adapter = isFirebaseConfigured
     ? useFirebaseAdapter<T>(collectionName, anio)
     : useLocalStorageAdapter<T>(collectionName, anio)
+  /* eslint-enable react-hooks/rules-of-hooks */
 
   const checkWritePermission = useCallback(() => {
-    if (role && !(ROLE_PERMISSIONS[role].canWrite as string[]).includes(collectionName)) {
+    if (role && !canWriteCollection(role, collectionName)) {
       throw new Error('No tienes permisos para esta operacion')
     }
   }, [role, collectionName])
@@ -47,6 +50,7 @@ export function useCollection<T>(
       setError(getErrorMessage(err))
       throw err
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- adapter is stable (Strategy Pattern singleton)
   }, [checkWritePermission, user?.uid, adapter.add])
 
   const update = useCallback(async (id: string, item: Partial<T>) => {
@@ -59,6 +63,7 @@ export function useCollection<T>(
       setError(getErrorMessage(err))
       throw err
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- adapter is stable (Strategy Pattern singleton)
   }, [checkWritePermission, user?.uid, adapter.update])
 
   const remove = useCallback(async (id: string) => {
@@ -70,6 +75,7 @@ export function useCollection<T>(
       setError(getErrorMessage(err))
       throw err
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- adapter is stable (Strategy Pattern singleton)
   }, [checkWritePermission, adapter.remove])
 
   // Merge adapter error with local error (adapter errors come from Firestore listener)

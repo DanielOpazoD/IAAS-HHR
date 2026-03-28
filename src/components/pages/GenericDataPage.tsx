@@ -71,6 +71,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
           <input
             type="text"
             placeholder="Buscar..."
+            aria-label="Buscar registros"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors w-44"
@@ -170,7 +171,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   if (loading) {
     return (
       <>
-        <PageHeader title={config.title} subtitle={config.subtitle(anio)} />
+        <PageHeader title={config.title} />
         <SkeletonTable rows={6} cols={config.columns.length} />
       </>
     )
@@ -183,8 +184,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
     <>
       <PageHeader
         title={config.title}
-        subtitle={config.subtitle(anio)}
-        onAdd={writable ? openNew : undefined}
+                onAdd={writable ? openNew : undefined}
         onExport={handleExport}
       />
 

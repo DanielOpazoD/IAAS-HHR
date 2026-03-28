@@ -8,17 +8,6 @@ describe('PageHeader', () => {
     expect(screen.getByTestId('page-title')).toHaveTextContent('Cirugías Trazadoras')
   })
 
-  it('renders subtitle when provided', () => {
-    render(<PageHeader title="Título" subtitle="Descripción de la página" />)
-    expect(screen.getByText('Descripción de la página')).toBeInTheDocument()
-  })
-
-  it('does not render subtitle when not provided', () => {
-    const { container } = render(<PageHeader title="Título" />)
-    const subtitle = container.querySelector('p')
-    expect(subtitle).toBeNull()
-  })
-
   it('renders add button when onAdd is provided', () => {
     render(<PageHeader title="Test" onAdd={vi.fn()} />)
     expect(screen.getByTestId('btn-add')).toBeInTheDocument()

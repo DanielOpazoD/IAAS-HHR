@@ -13,6 +13,7 @@ const HeaderSlotContext = createContext<HeaderSlotContextValue>({
   clearSlot: () => {},
 })
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useHeaderSlot = () => useContext(HeaderSlotContext)
 
 export function HeaderSlotProvider({ children }: { children: ReactNode }) {

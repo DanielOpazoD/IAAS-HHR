@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User } from 'firebase/auth'
 import { isFirebaseConfigured, getFirebaseAuth } from '@/config/firebase'
 import type { UserRole } from '@/types/roles'
-import { ROLE_PERMISSIONS } from '@/types/roles'
+import { canWriteCollection } from '@/types/roles'
 import * as userService from '@/services/userService'
 
 interface AuthContextType {
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const canWrite = (collection: string): boolean => {
     if (!role) return false
-    return (ROLE_PERMISSIONS[role].canWrite as string[]).includes(collection)
+    return canWriteCollection(role, collection)
   }
 
   return (

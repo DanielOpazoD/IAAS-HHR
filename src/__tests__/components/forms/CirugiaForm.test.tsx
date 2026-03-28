@@ -42,6 +42,7 @@ describe('CirugiaForm', () => {
       fechaPrimerControl: '', observaciones: '', iho: 'NO',
       fechaSegundoControl: '', observaciones2: '',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<CirugiaForm {...defaultProps} initial={initial} />)
     expect(screen.getByTestId('btn-submit')).toHaveTextContent('Actualizar')
@@ -59,6 +60,7 @@ describe('CirugiaForm', () => {
       fechaPrimerControl: '2026-01-22', observaciones: 'Sin novedad', iho: 'NO',
       fechaSegundoControl: '2026-02-01', observaciones2: 'Todo bien',
       createdAt: '', updatedAt: '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
     render(<CirugiaForm {...defaultProps} initial={initial} />)
     expect(screen.getByDisplayValue('Juan Perez')).toBeInTheDocument()

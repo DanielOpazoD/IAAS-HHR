@@ -1,12 +1,11 @@
 interface PageHeaderProps {
   title: string
-  subtitle?: string
   onAdd?: () => void
   onExport?: () => void
   addLabel?: string
 }
 
-export default function PageHeader({ title, subtitle, onAdd, onExport, addLabel = 'Agregar' }: PageHeaderProps) {
+export default function PageHeader({ title, onAdd, onExport, addLabel = 'Agregar' }: PageHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-3" data-testid="page-header">
       <div>
