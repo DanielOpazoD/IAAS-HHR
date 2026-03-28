@@ -19,10 +19,15 @@ service cloud.firestore {
       return getUserRole() == 'admin';
     }
 
-    /** Año must be a realistic hospital year (2015-2035) */
+    /**
+     * Año must be a realistic hospital year (2015-2035).
+     * Note: we intentionally avoid `is int` because the Firestore JS SDK
+     * can store JavaScript numbers as double (e.g. 2026 → 2026.0), which
+     * would cause `is int` to return false even for valid whole-number years.
+     * The range check is sufficient to prevent obviously bad values.
+     */
     function validAnio() {
-      return request.resource.data.anio is int
-        && request.resource.data.anio >= 2015
+      return request.resource.data.anio >= 2015
         && request.resource.data.anio <= 2035;
     }
 

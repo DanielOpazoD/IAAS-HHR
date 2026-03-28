@@ -106,12 +106,35 @@ export default function ImportPage() {
           }
         }
 
-        // Wait for Firestore to confirm all writes reached the server.
-        // With offline persistence, create() resolves optimistically (local cache).
-        // waitForPendingWrites() ensures data is actually committed before success.
+        // With offline persistence, addDoc() resolves optimistically before the
+        // server confirms. waitForPendingWrites() blocks until server ACKs all writes.
+        // If the server rejects (e.g. permission-denied), the pending writes are
+        // rolled back and waitForPendingWrites() resolves with nothing pending.
+        // We then do a server-side count to verify data actually reached Firestore.
         if (db) {
-          const { waitForPendingWrites } = await import('firebase/firestore')
+          const {
+            waitForPendingWrites,
+            getCountFromServer,
+            query,
+            collection,
+            where,
+          } = await import('firebase/firestore')
+
           await waitForPendingWrites(db)
+
+          // Verify at least one collection has data on the server
+          const nonEmpty = collections.find((c) => c.data.length > 0)
+          if (nonEmpty) {
+            const snap = await getCountFromServer(
+              query(collection(db, nonEmpty.name), where('anio', '==', anio))
+            )
+            if (snap.data().count === 0) {
+              throw new Error(
+                'Los datos no llegaron al servidor. ' +
+                'Verifica tu conexión a internet y que tengas permisos de escritura.'
+              )
+            }
+          }
         }
       }
 
