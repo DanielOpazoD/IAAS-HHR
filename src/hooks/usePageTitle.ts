@@ -3,16 +3,17 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
 const ROUTE_TITLES: Record<string, string> = {
-  '/': 'Dashboard',
-  '/cirugias': 'Cirugias Trazadoras',
-  '/partos': 'Partos / Cesarea',
+  '/': 'Vigilancia Epidemiológica',
+  '/cirugias': 'Cirugías Trazadoras',
+  '/partos': 'Partos / Cesárea',
   '/dip': 'DIP',
   '/arepi': 'AREpi',
   '/registro-iaas': 'Registro IAAS',
-  '/consolidacion': 'Consolidacion de Tasas',
+  '/consolidacion': 'Consolidación de Tasas',
+  '/documentos': 'Documentos IAAS',
   '/importar': 'Importar Excel',
   '/admin/users': 'Usuarios',
-  '/configuracion': 'Configuracion',
+  '/configuracion': 'Configuración',
 }
 
 const BASE_TITLE = `IAAS - ${APP_CONFIG.hospitalName}`

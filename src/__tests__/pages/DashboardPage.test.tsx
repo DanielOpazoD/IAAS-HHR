@@ -28,12 +28,12 @@ describe('DashboardPage', () => {
 
   it('renders dashboard title', () => {
     render(createElement(DashboardPage), { wrapper })
-    expect(screen.getByText('Dashboard')).toBeDefined()
+    expect(screen.getByText('Vigilancia Epidemiológica')).toBeDefined()
   })
 
   it('displays the current year in subtitle', () => {
     render(createElement(DashboardPage), { wrapper })
-    expect(screen.getByText(/IAAS - 2026/)).toBeDefined()
+    expect(screen.getByText(/Hospital Hanga Roa/)).toBeDefined()
   })
 
   it('shows all 5 stat cards', () => {

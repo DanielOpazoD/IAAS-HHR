@@ -25,6 +25,7 @@ const ConsolidacionPage = lazy(() => import('@/pages/ConsolidacionPage'))
 const ImportPage = lazy(() => import('@/pages/ImportPage'))
 const AdminUsersPage = lazy(() => import('@/pages/AdminUsersPage'))
 const ConfiguracionPage = lazy(() => import('@/pages/ConfiguracionPage'))
+const DocumentosIaasPage = lazy(() => import('@/pages/DocumentosIaasPage'))
 
 function PageLoader() {
   return (
@@ -80,6 +81,7 @@ function ProtectedApp() {
           <Route path="importar" element={<RoleRoute adminOnly><ImportPage /></RoleRoute>} />
           <Route path="admin/users" element={<RoleRoute adminOnly><AdminUsersPage /></RoleRoute>} />
           <Route path="configuracion" element={<RoleRoute adminOnly><ConfiguracionPage /></RoleRoute>} />
+          <Route path="documentos" element={<DocumentosIaasPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

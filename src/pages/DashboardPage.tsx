@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
 import { useCollection } from '@/hooks/useCollection'
@@ -8,9 +8,17 @@ import { MESES, MESES_CORTOS } from '@/utils/constants'
 import { getErrorMessage } from '@/utils/errors'
 import { exportFullWorkbook } from '@/services/excel/fullExport'
 
+const ConsolidacionPage = lazy(() => import('@/pages/ConsolidacionPage'))
+
+const TABS = [
+  { id: 'resumen', label: 'Resumen' },
+  { id: 'consolidacion', label: 'Consolidación de Tasas' },
+] as const
+type TabId = typeof TABS[number]['id']
+
 function StatCard({ label, count, icon, accent }: { label: string; count: number; icon: string; accent: string }) {
   return (
-    <div className={`bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow`}>
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${accent}`}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,8 +45,18 @@ function MiniBar({ label, value, max }: { label: string; value: number; max: num
   )
 }
 
+function TabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-32">
+      <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const { anio } = useOutletContext<{ anio: number }>()
+  const [activeTab, setActiveTab] = useState<TabId>('resumen')
+
   const { data: cirugias } = useCollection<CirugiaTrazadora>('cirugias', anio)
   const { data: partos } = useCollection<PartoCesarea>('partos', anio)
   const { data: dip } = useCollection<DispositivoInvasivo>('dip', anio)
@@ -74,83 +92,121 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top header */}
+    <div className="space-y-5">
+      {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Resumen de vigilancia epidemiológica IAAS - {anio}</p>
+          <h2 className="text-2xl font-bold text-gray-900">Vigilancia Epidemiológica</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Hospital Hanga Roa — {anio}</p>
         </div>
-        <button
-          onClick={handleExportAll}
-          disabled={totalRegistros === 0}
-          className="inline-flex items-center gap-2.5 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 shadow-sm hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Icon name="download" className="w-5 h-5" />
-          Descargar Excel {anio}
-        </button>
+        {activeTab === 'resumen' && (
+          <button
+            onClick={handleExportAll}
+            disabled={totalRegistros === 0}
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 shadow-sm hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Icon name="download" className="w-5 h-5" />
+            Descargar Excel {anio}
+          </button>
+        )}
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard label="Cirugías Trazadoras" count={cirugias.length} icon="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" accent="bg-blue-50 text-blue-600" />
-        <StatCard label="Partos / Cesárea" count={partos.length} icon="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" accent="bg-pink-50 text-pink-600" />
-        <StatCard label="DIP" count={dip.length} icon="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" accent="bg-amber-50 text-amber-600" />
-        <StatCard label="AREpi" count={arepi.length} icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" accent="bg-purple-50 text-purple-600" />
-        <StatCard label="Registros IAAS" count={iaas.length} icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" accent="bg-teal-50 text-teal-600" />
-      </div>
-
-      {/* Bottom section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Alertas */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
-              <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-            </div>
-            <h3 className="font-semibold text-gray-900">Alertas</h3>
-          </div>
-          <div className="space-y-2">
-            {ihoCount > 0 && (
-              <div className="flex items-center gap-2.5 text-sm p-3 bg-red-50 rounded-xl text-red-700 font-medium">
-                <span className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold">{ihoCount}</span>
-                IHO en cirugías trazadoras
-              </div>
-            )}
-            {iaasPartos > 0 && (
-              <div className="flex items-center gap-2.5 text-sm p-3 bg-orange-50 rounded-xl text-orange-700 font-medium">
-                <span className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold">{iaasPartos}</span>
-                Signos/síntomas IAAS en partos
-              </div>
-            )}
-            {fallecidos > 0 && (
-              <div className="flex items-center gap-2.5 text-sm p-3 bg-red-50 rounded-xl text-red-800 font-medium">
-                <span className="w-6 h-6 rounded-full bg-red-200 flex items-center justify-center text-xs font-bold">{fallecidos}</span>
-                Fallecido(s) registrado(s)
-              </div>
-            )}
-            {ihoCount === 0 && iaasPartos === 0 && fallecidos === 0 && (
-              <div className="flex items-center gap-2.5 text-sm p-3 bg-green-50 rounded-xl text-green-700 font-medium">
-                <Icon name="check" className="w-5 h-5" />
-                Sin alertas activas
-              </div>
-            )}
-          </div>
+      {/* Internal tabs */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex border-b border-gray-100">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-5 py-3 text-sm font-medium transition-colors relative ${
+                activeTab === tab.id
+                  ? 'text-primary-700'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary-600 rounded-full" />
+              )}
+            </button>
+          ))}
         </div>
 
-        {/* Registros por mes - chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center">
-              <Icon name="chart" className="w-4 h-4 text-primary-600" />
+        <div className="p-5">
+          {activeTab === 'resumen' && (
+            <div className="space-y-5">
+              {/* Stat cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <StatCard label="Cirugías Trazadoras" count={cirugias.length} icon="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" accent="bg-blue-50 text-blue-600" />
+                <StatCard label="Partos / Cesárea" count={partos.length} icon="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" accent="bg-pink-50 text-pink-600" />
+                <StatCard label="DIP" count={dip.length} icon="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" accent="bg-amber-50 text-amber-600" />
+                <StatCard label="AREpi" count={arepi.length} icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" accent="bg-purple-50 text-purple-600" />
+                <StatCard label="Registros IAAS" count={iaas.length} icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" accent="bg-teal-50 text-teal-600" />
+              </div>
+
+              {/* Bottom section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {/* Alertas */}
+                <div className="bg-gray-50 rounded-xl border border-gray-100 p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">Alertas</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {ihoCount > 0 && (
+                      <div className="flex items-center gap-2.5 text-sm p-3 bg-red-50 rounded-xl text-red-700 font-medium">
+                        <span className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold">{ihoCount}</span>
+                        IHO en cirugías trazadoras
+                      </div>
+                    )}
+                    {iaasPartos > 0 && (
+                      <div className="flex items-center gap-2.5 text-sm p-3 bg-orange-50 rounded-xl text-orange-700 font-medium">
+                        <span className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold">{iaasPartos}</span>
+                        Signos/síntomas IAAS en partos
+                      </div>
+                    )}
+                    {fallecidos > 0 && (
+                      <div className="flex items-center gap-2.5 text-sm p-3 bg-red-50 rounded-xl text-red-800 font-medium">
+                        <span className="w-6 h-6 rounded-full bg-red-200 flex items-center justify-center text-xs font-bold">{fallecidos}</span>
+                        Fallecido(s) registrado(s)
+                      </div>
+                    )}
+                    {ihoCount === 0 && iaasPartos === 0 && fallecidos === 0 && (
+                      <div className="flex items-center gap-2.5 text-sm p-3 bg-green-50 rounded-xl text-green-700 font-medium">
+                        <Icon name="check" className="w-5 h-5" />
+                        Sin alertas activas
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Registros por mes */}
+                <div className="lg:col-span-2 bg-gray-50 rounded-xl border border-gray-100 p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center">
+                      <Icon name="chart" className="w-4 h-4 text-primary-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900">Registros por Mes</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {monthlyData.map((m) => (
+                      <MiniBar key={m.label} label={m.label} value={m.value} max={maxMonthly} />
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <h3 className="font-semibold text-gray-900">Registros por Mes</h3>
-          </div>
-          <div className="space-y-2">
-            {monthlyData.map((m) => (
-              <MiniBar key={m.label} label={m.label} value={m.value} max={maxMonthly} />
-            ))}
-          </div>
+          )}
+
+          {activeTab === 'consolidacion' && (
+            <Suspense fallback={<TabLoadingFallback />}>
+              <ConsolidacionPage anio={anio} />
+            </Suspense>
+          )}
         </div>
       </div>
     </div>

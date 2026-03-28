@@ -94,8 +94,14 @@ const RateTable = memo(function RateTable({
   )
 })
 
-export default function ConsolidacionPage() {
-  const { anio } = useOutletContext<{ anio: number }>()
+interface ConsolidacionPageProps {
+  /** When rendered as an embedded tab, anio is passed as prop instead of outlet context */
+  anio?: number
+}
+
+export default function ConsolidacionPage({ anio: propAnio }: ConsolidacionPageProps = {}) {
+  const ctx = useOutletContext<{ anio: number } | null>()
+  const anio = propAnio ?? ctx?.anio ?? new Date().getFullYear()
   const [cuatrimestre, setCuatrimestre] = useState(1)
   const [activeTab, setActiveTab] = useState<TabId>('dip')
   const meses = MESES_POR_CUATRIMESTRE[cuatrimestre]
