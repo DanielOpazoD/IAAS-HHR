@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseExcelFile, ImportResult } from '@/services/excel/excelImport'
-import { isFirebaseConfigured } from '@/config/firebase'
+import { isFirebaseConfigured, db } from '@/config/firebase'
 import { useToastContext } from '@/context/ToastContext'
 import { getErrorMessage } from '@/utils/errors'
 import { getLocalKey, loadLocal, saveLocal } from '@/utils/localStorage'
@@ -104,6 +104,14 @@ export default function ImportPage() {
             const { id, ...rest } = item
             await firestoreService.create(name, rest as Record<string, unknown>)
           }
+        }
+
+        // Wait for Firestore to confirm all writes reached the server.
+        // With offline persistence, create() resolves optimistically (local cache).
+        // waitForPendingWrites() ensures data is actually committed before success.
+        if (db) {
+          const { waitForPendingWrites } = await import('firebase/firestore')
+          await waitForPendingWrites(db)
         }
       }
 

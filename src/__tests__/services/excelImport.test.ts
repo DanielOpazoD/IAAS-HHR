@@ -29,21 +29,56 @@ describe('Excel import normalization', () => {
   })
 
   describe('Date string conversion', () => {
-    it('handles ISO date strings', () => {
-      const isoDate = '2026-03-15'
-      const [year, month, day] = isoDate.split('-')
-      expect(year).toBe('2026')
-      expect(month).toBe('03')
-      expect(day).toBe('15')
+    // Mirror the updated toDateStr logic for test purposes
+    function toDateStr(val: unknown): string {
+      if (val == null || val === '') return ''
+      if (val instanceof Date) {
+        if (isNaN(val.getTime())) return ''
+        const y = val.getFullYear()
+        const m = String(val.getMonth() + 1).padStart(2, '0')
+        const d = String(val.getDate()).padStart(2, '0')
+        return `${y}-${m}-${d}`
+      }
+      if (typeof val === 'string') {
+        const s = val.trim()
+        if (!s) return ''
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+        const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+        if (slash) return `${slash[3]}-${String(slash[2]).padStart(2, '0')}-${String(slash[1]).padStart(2, '0')}`
+        const dash = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)
+        if (dash) return `${dash[3]}-${String(dash[2]).padStart(2, '0')}-${String(dash[1]).padStart(2, '0')}`
+        return s
+      }
+      return ''
+    }
+
+    it('passes through YYYY-MM-DD unchanged', () => {
+      expect(toDateStr('2026-03-15')).toBe('2026-03-15')
     })
 
-    it('handles DD-MM-YYYY format', () => {
-      const dmyDate = '15-03-2026'
-      const parts = dmyDate.match(/(\d{2})-(\d{2})-(\d{4})/)
-      expect(parts).not.toBeNull()
-      if (parts) {
-        expect(`${parts[3]}-${parts[2]}-${parts[1]}`).toBe('2026-03-15')
-      }
+    it('converts DD/MM/YYYY (common Chilean Excel format)', () => {
+      expect(toDateStr('10/03/2026')).toBe('2026-03-10')
+      expect(toDateStr('1/3/2026')).toBe('2026-03-01')
+    })
+
+    it('converts DD-MM-YYYY format', () => {
+      expect(toDateStr('15-03-2026')).toBe('2026-03-15')
+      expect(toDateStr('1-3-2026')).toBe('2026-03-01')
+    })
+
+    it('handles Date objects using local date (no timezone shift)', () => {
+      const d = new Date(2026, 2, 10) // March 10, 2026 LOCAL midnight
+      expect(toDateStr(d)).toBe('2026-03-10') // Must not shift to 2026-03-09
+    })
+
+    it('returns empty string for null/undefined/empty', () => {
+      expect(toDateStr(null)).toBe('')
+      expect(toDateStr(undefined)).toBe('')
+      expect(toDateStr('')).toBe('')
+    })
+
+    it('returns empty string for invalid Date', () => {
+      expect(toDateStr(new Date('invalid'))).toBe('')
     })
   })
 

@@ -59,19 +59,49 @@ function sanitizeRut(val: CellValue): string {
 // Existing helpers (unchanged)
 // ---------------------------------------------------------------------------
 
+/**
+ * Converts any Excel cell value to a YYYY-MM-DD string.
+ *
+ * Handles:
+ * - Date objects (from xlsx cellDates:true) — uses LOCAL date methods to avoid
+ *   UTC timezone off-by-one errors (e.g. midnight local → previous day in UTC)
+ * - Excel serial numbers
+ * - String dates in DD/MM/YYYY, DD-MM-YYYY, or YYYY-MM-DD format
+ */
 function toDateStr(val: CellValue): string {
-  if (!val) return ''
-  if (val instanceof Date) return val.toISOString().slice(0, 10)
+  if (val == null || val === '') return ''
+
+  // Date object (cellDates: true) — use local time to avoid UTC timezone shift
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return ''
+    const y = val.getFullYear()
+    const m = String(val.getMonth() + 1).padStart(2, '0')
+    const d = String(val.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  // Excel serial date number
   if (typeof val === 'number') {
+    if (!isFinite(val)) return ''
     const d = XLSX.SSF.parse_date_code(val)
-    if (d) return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`
+    if (d && d.y > 1900) return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`
   }
+
   if (typeof val === 'string') {
-    const parts = val.match(/(\d{2})-(\d{2})-(\d{4})/)
-    if (parts) return `${parts[3]}-${parts[2]}-${parts[1]}`
-    return val
+    const s = val.trim()
+    if (!s) return ''
+    // Already YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+    // DD/MM/YYYY or D/M/YYYY (common in Chilean Excel files)
+    const slash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+    if (slash) return `${slash[3]}-${String(slash[2]).padStart(2, '0')}-${String(slash[1]).padStart(2, '0')}`
+    // DD-MM-YYYY
+    const dash = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)
+    if (dash) return `${dash[3]}-${String(dash[2]).padStart(2, '0')}-${String(dash[1]).padStart(2, '0')}`
+    return s
   }
-  return String(val)
+
+  return ''
 }
 
 function normMes(val: CellValue): Mes | '' {
