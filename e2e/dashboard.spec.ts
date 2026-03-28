@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Dashboard', () => {
+test.describe('Vigilancia Epidemiológica', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('h2').first()).toContainText('Dashboard')
+    await expect(page.locator('h2').first()).toContainText('Vigilancia Epidemiológica')
   })
 
-  test('muestra el título y subtítulo correctos', async ({ page }) => {
-    await expect(page.locator('h2').first()).toContainText('Dashboard')
-    await expect(page.getByText('Resumen de vigilancia epidemiológica IAAS')).toBeVisible()
+  test('muestra el título correcto', async ({ page }) => {
+    await expect(page.locator('h2').first()).toContainText('Vigilancia Epidemiológica')
+    await expect(page.locator('main#main-content').getByText(/Hospital Hanga Roa/)).toBeVisible()
   })
 
   test('muestra indicador de modo demo', async ({ page }) => {
@@ -22,14 +22,12 @@ test.describe('Dashboard', () => {
     await expect(yearSelect).toHaveValue(currentYear)
   })
 
-  test('cambiar el año actualiza el subtítulo', async ({ page }) => {
-    await page.getByRole('combobox').first().selectOption('2025')
-    // The subtitle is unique enough to avoid strict mode
-    await expect(page.getByText('Resumen de vigilancia epidemiológica IAAS - 2025')).toBeVisible()
+  test('muestra las tabs Resumen y Consolidación de Tasas', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Resumen' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Consolidación de Tasas' })).toBeVisible()
   })
 
-  test('muestra las 5 tarjetas resumen de módulos', async ({ page }) => {
-    // Scope to main to avoid matching the sidebar nav items
+  test('muestra las 5 tarjetas resumen de módulos en tab Resumen', async ({ page }) => {
     const main = page.locator('main#main-content')
     await expect(main.getByText('Cirugías Trazadoras')).toBeVisible()
     await expect(main.getByText('Partos / Cesárea')).toBeVisible()
@@ -48,16 +46,21 @@ test.describe('Dashboard', () => {
     await expect(main.getByRole('heading', { name: 'Registros por Mes' })).toBeVisible()
   })
 
-  test('botón Descargar Excel está presente', async ({ page }) => {
+  test('botón Descargar Excel está presente en tab Resumen', async ({ page }) => {
     await expect(page.getByRole('button', { name: /descargar excel/i })).toBeVisible()
+  })
+
+  test('tab Consolidación de Tasas carga el módulo de tasas', async ({ page }) => {
+    await page.getByRole('button', { name: 'Consolidación de Tasas' }).click()
+    const main = page.locator('main#main-content')
+    await expect(main.getByText('Consolidación de Tasas')).toBeVisible()
+    await expect(main.getByText('Vigilancia DIP')).toBeVisible()
   })
 
   test('las tarjetas resumen muestran contadores numéricos', async ({ page }) => {
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-    // Each stat card shows a number — scoped to main to avoid option elements
     const main = page.locator('main#main-content')
-    // All counts should be 0 (no data), visible as text in the stat cards
     const statNumbers = main.locator('.text-3xl, .text-2xl, [class*="font-bold"]').filter({ hasText: /^\d+$/ })
     await expect(statNumbers.first()).toBeVisible()
   })

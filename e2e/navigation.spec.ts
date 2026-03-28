@@ -3,28 +3,28 @@ import { test, expect } from '@playwright/test'
 test.describe('Navegación', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
-    await expect(page.locator('h2').first()).toContainText('Dashboard')
+    await expect(page.locator('h2').first()).toContainText('Vigilancia Epidemiológica')
   })
 
-  test('sidebar muestra todos los links de navegación principales', async ({ page }) => {
+  test('sidebar muestra Vigilancia Epidemiológica y submódulos', async ({ page }) => {
     const sidebar = page.getByTestId('sidebar')
     await expect(sidebar).toBeVisible()
-    await expect(sidebar.getByText('Dashboard')).toBeVisible()
-    await expect(sidebar.getByText('Cirugias Trazadoras')).toBeVisible()
-    await expect(sidebar.getByText('Partos / Cesarea')).toBeVisible()
+    await expect(sidebar.getByText('Vigilancia Epidemiológica')).toBeVisible()
+    await expect(sidebar.getByText('Cirugías Trazadoras')).toBeVisible()
+    await expect(sidebar.getByText('Partos / Cesárea')).toBeVisible()
     await expect(sidebar.getByText('DIP')).toBeVisible()
     await expect(sidebar.getByText('AREpi')).toBeVisible()
     await expect(sidebar.getByText('Registro IAAS')).toBeVisible()
-    await expect(sidebar.getByText('Consolidacion Tasas')).toBeVisible()
+    await expect(sidebar.getByText('Documentos IAAS')).toBeVisible()
   })
 
   test('navega a cada módulo correctamente', async ({ page }) => {
     const sidebar = page.getByTestId('sidebar')
 
-    await sidebar.getByText('Cirugias Trazadoras').click()
+    await sidebar.getByText('Cirugías Trazadoras').click()
     await expect(page.getByTestId('page-title')).toContainText('Cirugías Trazadoras')
 
-    await sidebar.getByText('Partos / Cesarea').click()
+    await sidebar.getByText('Partos / Cesárea').click()
     await expect(page.getByTestId('page-title')).toContainText('Endometritis Puerperal')
 
     await sidebar.getByText('DIP').click()
@@ -37,20 +37,20 @@ test.describe('Navegación', () => {
     await expect(page.getByTestId('page-title')).toContainText('Registro IAAS')
   })
 
-  test('navega a la página de Consolidación', async ({ page }) => {
-    await page.getByTestId('sidebar').getByText('Consolidacion Tasas').click()
-    await expect(page.locator('h2').first()).toContainText('Consolidación')
+  test('tab Consolidación de Tasas se abre desde Vigilancia Epidemiológica', async ({ page }) => {
+    await page.getByRole('button', { name: 'Consolidación de Tasas' }).click()
+    await expect(page.getByText('Consolidación de Tasas').first()).toBeVisible()
   })
 
   test('colapsa y expande el sidebar', async ({ page }) => {
     const sidebar = page.getByTestId('sidebar')
-    await expect(sidebar.getByText('Dashboard')).toBeVisible()
+    await expect(sidebar.getByText('Vigilancia Epidemiológica')).toBeVisible()
 
-    await sidebar.getByTitle('Colapsar menu').click()
-    await expect(sidebar.getByText('Dashboard')).toBeHidden()
+    await sidebar.getByTitle('Colapsar menú').click()
+    await expect(sidebar.getByText('Vigilancia Epidemiológica')).toBeHidden()
 
-    await sidebar.getByTitle('Expandir menu').click()
-    await expect(sidebar.getByText('Dashboard')).toBeVisible()
+    await sidebar.getByTitle('Expandir menú').click()
+    await expect(sidebar.getByText('Vigilancia Epidemiológica')).toBeVisible()
   })
 
   test('el selector de año está visible en el header', async ({ page }) => {
@@ -61,7 +61,7 @@ test.describe('Navegación', () => {
   })
 
   test('módulos con filtro de mes muestran selector en el header', async ({ page }) => {
-    await page.getByTestId('sidebar').getByText('Cirugias Trazadoras').click()
+    await page.getByTestId('sidebar').getByText('Cirugías Trazadoras').click()
     // Year selector + month selector = 2 comboboxes
     const monthCombo = page.getByRole('combobox').nth(1)
     await expect(monthCombo).toBeVisible()
@@ -76,10 +76,9 @@ test.describe('Navegación', () => {
   })
 
   test('menu admin se abre al hacer click en el logo (modo admin)', async ({ page }) => {
-    // Click the logo button to open the admin dropdown
-    await page.getByTestId('sidebar').getByTitle('Menu de administracion').click()
+    await page.getByTestId('sidebar').getByTitle('Menú de administración').click()
     await expect(page.getByText('Importar Excel')).toBeVisible()
     await expect(page.getByText('Usuarios')).toBeVisible()
-    await expect(page.getByText('Configuracion')).toBeVisible()
+    await expect(page.getByText('Configuración')).toBeVisible()
   })
 })

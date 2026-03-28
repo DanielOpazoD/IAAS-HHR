@@ -22,9 +22,10 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    // Force demo mode (no Firebase) so E2E tests don't hit auth
+    command: 'VITE_FIREBASE_API_KEY="" VITE_FIREBASE_AUTH_DOMAIN="" VITE_FIREBASE_PROJECT_ID="" npm run dev -- --port 5173',
     url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 30_000,
   },
 })
