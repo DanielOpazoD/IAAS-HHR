@@ -7,6 +7,11 @@
   command = "npm run build"
   publish = "dist"
 
+# Firebase API keys are intentionally public — security is enforced by Firestore Rules.
+# This tells Netlify's scanner not to flag the AIza... prefix as a secret.
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyC-oaGViqnbqdJHl8pWy4ohkxFMBUj5IZk"
+
 # ── Security headers ──────────────────────────────────────────────────────────
 # Applied to every response served by Netlify.
 # Critical for a healthcare app handling epidemiological surveillance data.
