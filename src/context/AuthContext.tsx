@@ -9,6 +9,7 @@ import * as userService from '@/services/userService'
 interface AuthContextType {
   user: User | null
   loading: boolean
+  roleLoading: boolean
   signIn: () => Promise<void>
   signOut: () => Promise<void>
   isDemo: boolean
@@ -27,6 +28,7 @@ const demoUser = {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(isFirebaseConfigured ? null : demoUser)
   const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [roleLoading, setRoleLoading] = useState(isFirebaseConfigured)
   const [role, setRole] = useState<UserRole | null>(isFirebaseConfigured ? null : 'admin')
 
   useEffect(() => {
@@ -39,16 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { onAuthStateChanged } = await import('firebase/auth')
       unsubscribe = onAuthStateChanged(authInstance, async (u) => {
         setUser(u)
+        setRoleLoading(true)
         if (u) {
           try {
             let profile = await userService.getUserProfile(u.uid)
             if (!profile) {
-              // First login: create as admin
+              // First login: create profile with null role (pending approval)
               profile = {
                 uid: u.uid,
                 email: u.email ?? '',
                 displayName: u.displayName ?? '',
-                role: 'admin',
+                role: null as unknown as UserRole,
                 createdAt: new Date().toISOString(),
               }
               await userService.createUserProfile(profile)
@@ -61,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRole(null)
         }
         setLoading(false)
+        setRoleLoading(false)
       })
     })
 
@@ -97,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isDemo: !isFirebaseConfigured, role, canWrite }}>
+    <AuthContext.Provider value={{ user, loading, roleLoading, signIn, signOut, isDemo: !isFirebaseConfigured, role, canWrite }}>
       {children}
     </AuthContext.Provider>
   )

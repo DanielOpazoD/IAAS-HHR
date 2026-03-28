@@ -43,10 +43,10 @@ function RoleRoute({ collection, adminOnly, children }: { collection?: string; a
 }
 
 function ProtectedApp() {
-  const { user, loading, role } = useAuth()
+  const { user, loading, roleLoading, role } = useAuth()
   const [anio, setAnio] = useState(getCurrentYear())
 
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

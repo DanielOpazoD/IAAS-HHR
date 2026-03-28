@@ -114,6 +114,7 @@ describe('useCollection — RBAC permission checks', () => {
       user: { uid: 'u1', email: 'test@test.com', displayName: 'Test' } as never,
       role: 'pabellon',
       loading: false,
+      roleLoading: false,
       isDemo: true,
       signIn: vi.fn(),
       signOut: vi.fn(),
