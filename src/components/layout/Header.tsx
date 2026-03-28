@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/AuthContext'
+import { useHeaderSlot } from '@/context/HeaderSlotContext'
 import { getCurrentYear } from '@/utils/dates'
 
 interface HeaderProps {
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export default function Header({ anio, onAnioChange, onMenuToggle }: HeaderProps) {
   const { user, signOut } = useAuth()
+  const { slot } = useHeaderSlot()
   const currentYear = getCurrentYear()
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
@@ -37,6 +39,14 @@ export default function Header({ anio, onAnioChange, onMenuToggle }: HeaderProps
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
+
+        {/* Slot: controles extra inyectados por la página activa (ej. selector de mes) */}
+        {slot && (
+          <>
+            <div className="w-px h-5 bg-gray-200" />
+            {slot}
+          </>
+        )}
       </div>
       <div className="flex items-center gap-2">
         {user && (

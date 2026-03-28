@@ -8,10 +8,9 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, subtitle, onAdd, onExport, addLabel = 'Agregar' }: PageHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-6" data-testid="page-header">
+    <div className="flex items-center justify-between mb-3" data-testid="page-header">
       <div>
         <h2 className="text-2xl font-bold text-gray-900" data-testid="page-title">{title}</h2>
-        {subtitle && <p className="text-sm text-gray-400 mt-0.5">{subtitle}</p>}
       </div>
       <div className="flex gap-2">
         {onExport && (

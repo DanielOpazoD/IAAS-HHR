@@ -5,6 +5,7 @@ import Header from './Header'
 import OnlineStatus from '@/components/ui/OnlineStatus'
 import ScrollToTop from '@/components/ui/ScrollToTop'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { HeaderSlotProvider } from '@/context/HeaderSlotContext'
 
 interface AppLayoutProps {
   anio: number
@@ -32,6 +33,7 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
   }
 
   return (
+    <HeaderSlotProvider>
     <div className="flex min-h-screen bg-gray-50/50">
       {/* Skip to content link for keyboard/screen reader users */}
       <a
@@ -74,5 +76,6 @@ export default function AppLayout({ anio, onAnioChange }: AppLayoutProps) {
         </main>
       </div>
     </div>
+    </HeaderSlotProvider>
   )
 }

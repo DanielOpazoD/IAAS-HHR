@@ -18,6 +18,9 @@ interface DataTableProps<T> {
   searchable?: boolean
   searchKeys?: string[]
   pageSize?: number
+  /** Si se pasa, el buscador pasa a ser controlado externamente y no se muestra dentro de la tabla */
+  search?: string
+  onSearchChange?: (v: string) => void
 }
 
 type SortDir = 'asc' | 'desc'
@@ -33,8 +36,13 @@ export default function DataTable<T extends { id?: string }>({
   searchable = true,
   searchKeys = ['nombre', 'rut'],
   pageSize = PAGE_SIZE_DEFAULT,
+  search: externalSearch,
+  onSearchChange,
 }: DataTableProps<T>) {
-  const [search, setSearch] = useState('')
+  const [internalSearch, setInternalSearch] = useState('')
+  const isControlled = externalSearch !== undefined
+  const search = isControlled ? externalSearch : internalSearch
+  const setSearch = isControlled ? (onSearchChange ?? (() => {})) : setInternalSearch
   const debouncedSearch = useDebounce(search, 300)
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -107,8 +115,8 @@ export default function DataTable<T extends { id?: string }>({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" data-testid="data-table">
-      {/* Search bar */}
-      {searchable && data.length > 3 && (
+      {/* Search bar — solo se muestra si no está controlado externamente */}
+      {searchable && !isControlled && data.length > 3 && (
         <div className="px-4 py-3 border-b border-gray-100">
           <div className="relative max-w-xs">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

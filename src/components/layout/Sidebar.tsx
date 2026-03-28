@@ -26,17 +26,24 @@ function NavItem({ item, collapsed }: { item: typeof navItems[0]; collapsed: boo
       end={item.to === '/'}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
-        `flex items-center gap-3 mx-3 px-3 py-2.5 text-sm rounded-xl transition-all ${
+        `relative flex items-center gap-3 mx-2 px-3 py-2 text-[13px] rounded-lg transition-all ${
           isActive
-            ? 'bg-white/15 text-white font-semibold shadow-sm'
-            : 'text-primary-200 hover:bg-white/8 hover:text-white'
+            ? 'bg-stone-200/80 text-gray-900 font-medium'
+            : 'text-gray-500 hover:bg-stone-200/50 hover:text-gray-700'
         } ${collapsed ? 'justify-center' : ''}`
       }
     >
-      <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
-      </svg>
-      {!collapsed && <span className="truncate">{item.label}</span>}
+      {({ isActive }) => (
+        <>
+          {isActive && !collapsed && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary-500 rounded-full" />
+          )}
+          <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+          </svg>
+          {!collapsed && <span className="truncate">{item.label}</span>}
+        </>
+      )}
     </NavLink>
   )
 }
@@ -78,70 +85,65 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   }, [menuOpen])
 
   return (
-    <aside data-testid="sidebar" className={`${collapsed ? 'w-[72px]' : 'w-64'} bg-gradient-to-b from-primary-900 to-primary-950 text-white h-screen flex flex-col flex-shrink-0 transition-[width] duration-200 overflow-y-auto`}>
-      <div className={`p-5 pb-4 ${collapsed ? 'px-3' : ''}`}>
-        <div className="flex items-center gap-3" ref={menuRef}>
-          {/* Clickable logo icon with admin menu */}
-          <div className="relative">
-            <button
-              onClick={() => role === 'admin' && setMenuOpen((prev) => !prev)}
-              className={`w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0 transition-all ${
-                role === 'admin' ? 'hover:bg-white/25 cursor-pointer active:scale-95' : ''
-              }`}
-              title={role === 'admin' ? 'Menu de administracion' : 'IAAS - Hospital Hanga Roa'}
-              aria-haspopup={role === 'admin' ? 'true' : undefined}
-              aria-expanded={menuOpen}
-            >
-              <svg className="w-6 h-6 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </button>
+    <aside data-testid="sidebar" className={`${collapsed ? 'w-[72px]' : 'w-64'} bg-stone-50 h-screen flex flex-col flex-shrink-0 transition-[width] duration-200 overflow-y-auto border-r border-stone-200`}>
+      {/* Header */}
+      <div className={`flex items-center gap-3 px-4 py-4 ${collapsed ? 'justify-center px-3' : ''}`} ref={menuRef}>
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => role === 'admin' && setMenuOpen((prev) => !prev)}
+            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+              role === 'admin' ? 'hover:bg-stone-200/70 cursor-pointer active:scale-95' : 'cursor-default'
+            }`}
+            title={role === 'admin' ? 'Menu de administracion' : 'IAAS - Hospital Hanga Roa'}
+            aria-haspopup={role === 'admin' ? 'true' : undefined}
+            aria-expanded={menuOpen}
+          >
+            <img src="/logo-iaas.png" alt="Logo Programa IAAS" className="w-7 h-7 object-contain" />
+          </button>
 
-            {/* Dropdown menu */}
-            {menuOpen && (
-              <div className="absolute top-12 left-0 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 animate-in">
-                {adminMenuItems.map((item) => (
-                  <button
-                    key={item.to}
-                    onClick={() => {
-                      navigate(item.to)
-                      setMenuOpen(false)
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                  >
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                    </svg>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {!collapsed && (
-            <div className="min-w-0">
-              <h1 className="text-base font-bold tracking-tight truncate">Hospital Hanga Roa</h1>
-              <p className="text-primary-300 text-[11px] font-medium">Vigilancia IAAS</p>
+          {/* Dropdown menu */}
+          {menuOpen && (
+            <div className="absolute top-11 left-0 w-52 bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 z-50 animate-in">
+              {adminMenuItems.map((item) => (
+                <button
+                  key={item.to}
+                  onClick={() => { navigate(item.to); setMenuOpen(false) }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-stone-100 hover:text-gray-900 transition-colors text-left"
+                >
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                  </svg>
+                  {item.label}
+                </button>
+              ))}
             </div>
           )}
         </div>
+
+        {!collapsed && (
+          <div className="min-w-0">
+            <h1 className="text-sm font-semibold text-gray-800 tracking-tight truncate">Hospital Hanga Roa</h1>
+            <p className="text-[11px] text-gray-400 font-medium mt-0.5">Vigilancia IAAS</p>
+          </div>
+        )}
       </div>
 
-      <div className="mx-5 border-t border-white/10 mb-2"></div>
+      <div className="mx-3 border-t border-stone-200 mb-1" />
 
-      <nav className="flex-1 py-1 space-y-0.5">
+      <nav className="flex-1 py-1 space-y-0.5 px-0">
         {filteredNavItems.map((item) => <NavItem key={item.to} item={item} collapsed={collapsed} />)}
       </nav>
 
+      <div className="mx-3 border-t border-stone-200 mt-1" />
+
       {/* Collapse toggle */}
-      <div className="pb-4 px-3">
+      <div className="p-3">
         <button
           onClick={onToggle}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-primary-300 hover:text-white hover:bg-white/8 rounded-xl transition-all"
+          className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-stone-200/50 rounded-lg transition-all ${collapsed ? 'justify-center' : ''}`}
           title={collapsed ? 'Expandir menu' : 'Colapsar menu'}
         >
-          <svg className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 transition-transform flex-shrink-0 ${collapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
           </svg>
           {!collapsed && <span>Colapsar</span>}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
@@ -9,6 +9,8 @@ import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
 import { useAuth } from '@/context/AuthContext'
 import { getErrorMessage } from '@/utils/errors'
 import PageHeader from '@/components/layout/PageHeader'
+import { useHeaderSlot } from '@/context/HeaderSlotContext'
+import { MESES } from '@/utils/constants'
 import DataTable from '@/components/ui/DataTable'
 import Modal from '@/components/ui/Modal'
 import SkeletonTable from '@/components/ui/SkeletonTable'
@@ -36,12 +38,60 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   const [editing, setEditing] = useState<(T & { id: string }) | undefined>()
   const [filterMes, setFilterMes] = useState('')
   const [filterSecondary, setFilterSecondary] = useState('')
+  const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [formValues, setFormValues] = useState<{ rut?: string; mes?: string }>({})
 
   const { confirm, ConfirmDialog } = useConfirm()
   const { addToast } = useToastContext()
+  const { setSlot, clearSlot } = useHeaderSlot()
   useUnsavedChanges(modalOpen)
+
+  // Inyecta controles (mes + búsqueda) en el Header
+  useEffect(() => {
+    setSlot(
+      <div className="flex items-center gap-2">
+        {config.hasMonthFilter && (
+          <>
+            <select
+              value={filterMes}
+              onChange={(e) => setFilterMes(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+            >
+              <option value="">Todos los meses</option>
+              {MESES.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+            <div className="w-px h-5 bg-gray-200" />
+          </>
+        )}
+        <div className="relative">
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors w-44"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Limpiar búsqueda"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    )
+    return () => clearSlot()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.hasMonthFilter, filterMes, search])
 
   const duplicateWarning = useDuplicateCheck(data as Array<Record<string, unknown>>, formValues, editing?.id)
 
@@ -127,7 +177,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   }
 
   const { FormComponent } = config
-  const showFilters = config.hasMonthFilter || config.secondaryFilter
+  const showFilters = config.secondaryFilter
 
   return (
     <>
@@ -140,9 +190,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
 
       {showFilters && (
         <FilterBar
-          hasMonthFilter={config.hasMonthFilter}
-          filterMes={filterMes}
-          onFilterMesChange={setFilterMes}
+          filterMes=""
+          onFilterMesChange={() => {}}
           secondaryFilter={config.secondaryFilter}
           filterSecondary={filterSecondary}
           onFilterSecondaryChange={setFilterSecondary}
@@ -151,12 +200,19 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         />
       )}
 
+      {/* Contador de resultados cuando hay filtro de mes activo y no hay filtro secundario */}
+      {config.hasMonthFilter && filterMes && !config.secondaryFilter && (
+        <p className="mb-4 text-xs text-gray-500">{filtered.length} de {data.length} registros</p>
+      )}
+
       <DataTable
         columns={config.columns}
         data={filtered}
         onEdit={writable ? handleEdit : undefined}
         onDelete={writable ? handleDelete : undefined}
         emptyMessage={`No hay ${config.entityName.plural} registrad${config.entityName.plural.endsWith('as') ? 'a' : 'o'}s`}
+        search={search}
+        onSearchChange={setSearch}
       />
 
       <Modal
