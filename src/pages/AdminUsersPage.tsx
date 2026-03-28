@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToastContext } from '@/context/ToastContext'
+import { isAdminRole } from '@/types/roles'
 import * as userService from '@/services/userService'
 import { ROLE_PERMISSIONS } from '@/types/roles'
 import type { UserProfile, UserRole } from '@/types/roles'
@@ -20,7 +21,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (role !== 'admin') {
+    if (!isAdminRole(role)) {
       navigate('/', { replace: true })
       return
     }
@@ -43,7 +44,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  if (role !== 'admin') return null
+  if (!isAdminRole(role)) return null
 
   return (
     <div>

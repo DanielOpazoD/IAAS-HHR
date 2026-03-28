@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { canWriteCollection, type NavItem } from '@/types/roles'
+import { canWriteCollection, isAdminRole, type NavItem } from '@/types/roles'
+import { APP_CONFIG } from '@/utils/constants'
 
 const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1', collection: undefined },
@@ -60,7 +61,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
   const filteredNavItems = useMemo(() => {
-    if (!role || role === 'admin') return navItems
+    if (!role || isAdminRole(role)) return navItems
     return navItems.filter((item) => !item.collection || canWriteCollection(role, item.collection))
   }, [role])
 
@@ -89,12 +90,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className={`flex items-center gap-3 px-4 py-4 ${collapsed ? 'justify-center px-3' : ''}`} ref={menuRef}>
         <div className="relative flex-shrink-0">
           <button
-            onClick={() => role === 'admin' && setMenuOpen((prev) => !prev)}
+            onClick={() => isAdminRole(role) && setMenuOpen((prev) => !prev)}
             className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-              role === 'admin' ? 'hover:bg-stone-200/70 cursor-pointer active:scale-95' : 'cursor-default'
+              isAdminRole(role) ? 'hover:bg-stone-200/70 cursor-pointer active:scale-95' : 'cursor-default'
             }`}
-            title={role === 'admin' ? 'Menu de administracion' : 'IAAS - Hospital Hanga Roa'}
-            aria-haspopup={role === 'admin' ? 'true' : undefined}
+            title={isAdminRole(role) ? 'Menu de administracion' : `IAAS - ${APP_CONFIG.hospitalName}`}
+            aria-haspopup={isAdminRole(role) ? 'true' : undefined}
             aria-expanded={menuOpen}
           >
             <img src="/logo-iaas.png" alt="Logo Programa IAAS" className="w-7 h-7 object-contain" />
@@ -121,8 +122,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
         {!collapsed && (
           <div className="min-w-0">
-            <h1 className="text-sm font-semibold text-gray-800 tracking-tight truncate">Hospital Hanga Roa</h1>
-            <p className="text-[11px] text-gray-500 font-medium mt-0.5">Vigilancia IAAS</p>
+            <h1 className="text-sm font-semibold text-gray-800 tracking-tight truncate">{APP_CONFIG.hospitalName}</h1>
+            <p className="text-[11px] text-gray-500 font-medium mt-0.5">{APP_CONFIG.systemName}</p>
           </div>
         )}
       </div>

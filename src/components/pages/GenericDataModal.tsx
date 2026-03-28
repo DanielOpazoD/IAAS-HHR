@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
+import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
 import type { RegistryConfig } from '@/config/registries'
 
 type AnyRecord = Record<string, unknown>
@@ -10,10 +12,9 @@ interface GenericDataModalProps {
   onClose: () => void
   editing: (AnyRecord & { id: string }) | undefined
   anio: number
+  data: AnyRecord[]
   onSubmit: (formData: Omit<AnyRecord, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   saving: boolean
-  duplicateWarning: string | null
-  onFormChange: (values: { rut?: string; mes?: string }) => void
   nextNumero: number | undefined
 }
 
@@ -28,13 +29,14 @@ export default function GenericDataModal({
   onClose,
   editing,
   anio,
+  data,
   onSubmit,
   saving,
-  duplicateWarning,
-  onFormChange,
   nextNumero,
 }: GenericDataModalProps) {
   const { FormComponent, entityName, wideModal } = config
+  const [formValues, setFormValues] = useState<{ rut?: string; mes?: string }>({})
+  const duplicateWarning = useDuplicateCheck(data, formValues, editing?.id)
 
   const title = editing
     ? `Editar ${entityName.singular}`
@@ -57,7 +59,7 @@ export default function GenericDataModal({
         onCancel={onClose}
         nextNumero={nextNumero}
         loading={saving}
-        onFormChange={onFormChange}
+        onFormChange={setFormValues}
       />
     </Modal>
   )

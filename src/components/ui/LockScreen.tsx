@@ -1,3 +1,4 @@
+import { APP_CONFIG } from '@/utils/constants'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { hashPin } from '../../utils/crypto'
 
@@ -135,7 +136,7 @@ export default function LockScreen({ children }: { children: React.ReactNode }) 
           Desbloquear
         </button>
 
-        <p className="text-xs text-gray-300 mt-4">Hospital Hanga Roa - IAAS</p>
+        <p className="text-xs text-gray-300 mt-4">{APP_CONFIG.hospitalName} - IAAS</p>
       </div>
     </div>
   )

@@ -5,7 +5,6 @@ import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useToastContext } from '@/context/ToastContext'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
-import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
 import { useAuth } from '@/context/AuthContext'
 import { useHeaderSlot } from '@/context/HeaderSlotContext'
 import { getErrorMessage } from '@/utils/errors'
@@ -42,7 +41,6 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   const [filterSecondary, setFilterSecondary] = useState('')
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
-  const [formValues, setFormValues] = useState<{ rut?: string; mes?: string }>({})
 
   const { confirm, ConfirmDialog } = useConfirm()
   const { addToast } = useToastContext()
@@ -95,10 +93,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
       </div>
     )
     return () => clearSlot()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.hasMonthFilter, filterMes, search])
-
-  const duplicateWarning = useDuplicateCheck(data as Array<Record<string, unknown>>, formValues, editing?.id)
+  }, [config.hasMonthFilter, filterMes, search, setSlot, clearSlot])
 
   // Filtering
   const filtered = data.filter((d) => {
@@ -220,10 +215,9 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         onClose={closeModal}
         editing={editing}
         anio={anio}
+        data={data as Record<string, unknown>[]}
         onSubmit={handleSubmit}
         saving={saving}
-        duplicateWarning={duplicateWarning}
-        onFormChange={setFormValues}
         nextNumero={nextNumero}
       />
 

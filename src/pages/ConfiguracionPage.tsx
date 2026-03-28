@@ -1,3 +1,4 @@
+import { APP_CONFIG } from '@/utils/constants'
 import { useState, useEffect } from 'react'
 import { hashPin } from '../utils/crypto'
 
@@ -82,7 +83,7 @@ export default function ConfiguracionPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2 border-b border-gray-50">
             <span className="text-sm text-gray-500">Aplicacion</span>
-            <span className="text-sm font-semibold text-gray-900">IAAS - Hospital Hanga Roa</span>
+            <span className="text-sm font-semibold text-gray-900">IAAS - {APP_CONFIG.hospitalName}</span>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-gray-50">
             <span className="text-sm text-gray-500">Version</span>

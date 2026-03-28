@@ -1,3 +1,4 @@
+import { APP_CONFIG } from '@/utils/constants'
 import { useState, useMemo, useCallback, memo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useCollection } from '@/hooks/useCollection'
@@ -165,7 +166,7 @@ export default function ConsolidacionPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Consolidación de Tasas</h2>
-          <p className="text-sm text-gray-500">Hospital Hanga Roa - {anio}</p>
+          <p className="text-sm text-gray-500">{APP_CONFIG.hospitalName} - {anio}</p>
         </div>
         <div className="flex items-center gap-3">
           <select

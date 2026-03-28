@@ -1,3 +1,11 @@
+/** Central configuration for the application. Change here to update everywhere. */
+export const APP_CONFIG = {
+  hospitalName: 'Hospital Hanga Roa',
+  location: 'Rapa Nui - Chile',
+  systemName: 'Vigilancia IAAS',
+  version: 'v2.2.0',
+} as const
+
 export const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril',
   'Mayo', 'Junio', 'Julio', 'Agosto',

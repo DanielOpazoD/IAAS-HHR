@@ -1,3 +1,4 @@
+import { APP_CONFIG } from '@/utils/constants'
 import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
@@ -25,8 +26,8 @@ export default function LoginPage() {
             <img src="/logo-iaas.png" alt="Logo Programa IAAS" className="w-24 h-24 object-contain" />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Hospital Hanga Roa</h1>
-          <p className="text-sm text-gray-400 mb-2">Rapa Nui - Chile</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{APP_CONFIG.hospitalName}</h1>
+          <p className="text-sm text-gray-400 mb-2">{APP_CONFIG.location}</p>
 
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 rounded-full mb-8">
             <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse" />
@@ -49,7 +50,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-primary-300/60 mt-6">
-          v2.2.0 — Vigilancia IAAS
+          {APP_CONFIG.version} — {APP_CONFIG.systemName}
         </p>
       </div>
     </div>

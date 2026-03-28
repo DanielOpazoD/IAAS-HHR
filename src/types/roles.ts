@@ -27,6 +27,14 @@ export function canWriteCollection(role: UserRole, collection: string): boolean 
   return ROLE_PERMISSIONS[role].canWrite.includes(collection as CollectionName)
 }
 
+/**
+ * Returns true if the role is 'admin'.
+ * Centralizes the admin check to avoid inline string comparisons throughout the app.
+ */
+export function isAdminRole(role: UserRole | null | undefined): boolean {
+  return role === 'admin'
+}
+
 /** Which collections each role can read/write */
 export const ROLE_PERMISSIONS: Record<UserRole, {
   canWrite: CollectionName[]

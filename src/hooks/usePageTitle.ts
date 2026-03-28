@@ -1,3 +1,4 @@
+import { APP_CONFIG } from '@/utils/constants'
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
@@ -14,7 +15,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/configuracion': 'Configuracion',
 }
 
-const BASE_TITLE = 'IAAS - Hospital Hanga Roa'
+const BASE_TITLE = `IAAS - ${APP_CONFIG.hospitalName}`
 
 /** Updates document.title based on current route */
 export function usePageTitle() {

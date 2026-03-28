@@ -1,0 +1,5 @@
+# Sistema de Vigilancia IAAS — Hospital Hanga Roa
+# Este sistema contiene datos clínicos de uso interno.
+# Se bloquea toda indexación por motores de búsqueda.
+User-agent: *
+Disallow: /

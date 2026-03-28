@@ -17,11 +17,28 @@ export default function ImportPage() {
   const [error, setError] = useState('')
   const [mode, setMode] = useState<'replace' | 'merge'>('merge')
 
+  const MAX_FILE_SIZE_MB = 10
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
   const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
     setError('')
     setDone(false)
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(`El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(1)} MB). El límite es ${MAX_FILE_SIZE_MB} MB.`)
+      e.target.value = ''
+      return
+    }
+
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+      setError('Solo se aceptan archivos Excel (.xlsx o .xls).')
+      e.target.value = ''
+      return
+    }
+
     setFileName(file.name)
 
     const reader = new FileReader()
@@ -35,6 +52,7 @@ export default function ImportPage() {
       }
     }
     reader.readAsArrayBuffer(file)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const total = result
