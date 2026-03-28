@@ -30,6 +30,7 @@ export function useFirebaseAdapter<T>(
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reset loading when collection/year changes
     setLoading(true)
     const constraints: QueryConstraint[] = []
     if (anio) {

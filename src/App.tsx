@@ -9,6 +9,10 @@ import LoginPage from '@/components/auth/LoginPage'
 import PendingApprovalPage from '@/components/auth/PendingApprovalPage'
 import { getCurrentYear } from '@/utils/dates'
 import LockScreen from '@/components/ui/LockScreen'
+import { initSentry } from '@/config/sentry'
+
+// Initialize Sentry before any React rendering
+initSentry()
 
 // Lazy-loaded pages (code-split per route)
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))

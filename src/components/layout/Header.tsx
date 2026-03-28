@@ -1,6 +1,7 @@
 import { useAuth } from '@/context/AuthContext'
 import { useHeaderSlot } from '@/context/HeaderSlotContext'
 import { getCurrentYear } from '@/utils/dates'
+import SyncStatus from '@/components/ui/SyncStatus'
 
 interface HeaderProps {
   anio: number
@@ -50,6 +51,7 @@ export default function Header({ anio, onAnioChange, onMenuToggle }: HeaderProps
         )}
       </div>
       <div className="flex items-center gap-2">
+        <SyncStatus />
         {user && (
           <>
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">

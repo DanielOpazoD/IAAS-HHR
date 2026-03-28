@@ -1,3 +1,5 @@
+import { captureError } from '@/config/sentry'
+
 /**
  * Map of common Firebase error codes to user-friendly Spanish messages.
  */
@@ -33,9 +35,14 @@ export function getErrorMessage(err: unknown): string {
     if ('code' in err) {
       const code = (err as { code: string }).code
       const friendly = FIREBASE_ERROR_MESSAGES[code]
+      // Capture server-side errors to Sentry (not user errors like popup-closed)
+      if (!code.startsWith('auth/')) {
+        captureError(err, { code })
+      }
       if (friendly) return friendly
       return `${code}: ${err.message}`
     }
+    captureError(err)
     return err.message
   }
   if (typeof err === 'string') return err
