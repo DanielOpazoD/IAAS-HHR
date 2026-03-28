@@ -171,7 +171,7 @@ export const registroIaasConfig: RegistryConfig<RegistroIAAS> = {
   collectionName: 'registroIaas',
   title: 'Registro IAAS',
   subtitle: (anio) => `${anio}`,
-  entityName: { singular: 'Registro IAAS', plural: 'registros' },
+  entityName: { singular: 'Registro IAAS', plural: 'infecciones' },
   hasMonthFilter: true,
   filterKey: 'mes',
   wideModal: true,

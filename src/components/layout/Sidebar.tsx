@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { ROLE_PERMISSIONS } from '@/types/roles'
+import { canWriteCollection } from '@/types/roles'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1', collection: undefined as string | undefined },
@@ -61,8 +61,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   const filteredNavItems = useMemo(() => {
     if (!role || role === 'admin') return navItems
-    const allowed = ROLE_PERMISSIONS[role].canWrite
-    return navItems.filter((item) => !item.collection || (allowed as string[]).includes(item.collection))
+    return navItems.filter((item) => !item.collection || canWriteCollection(role, item.collection))
   }, [role])
 
   // Close menu on click outside

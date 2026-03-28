@@ -106,6 +106,7 @@ export default function LockScreen({ children }: { children: React.ReactNode }) 
           type="password"
           inputMode="numeric"
           maxLength={8}
+          aria-label="PIN de desbloqueo"
           value={pin}
           onChange={(e) => {
             setPin(e.target.value.replace(/\D/g, ''))

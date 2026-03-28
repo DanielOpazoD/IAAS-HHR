@@ -27,14 +27,22 @@ service cloud.firestore {
       return anio is int && anio >= 2015 && anio <= 2035;
     }
 
+    /** Valid user roles — null means pending approval */
+    function isValidRole(role) {
+      return role == null || role == 'admin' || role == 'pabellon' || role == 'matronas';
+    }
+
     // -------------------------------------------------------------------------
     // User profiles — users can read their own; only admin can write
     // -------------------------------------------------------------------------
     match /users/{uid} {
       allow read: if isAuthenticated() && request.auth.uid == uid;
       allow write: if isAuthenticated() && isAdmin();
-      // Allow creating own profile on first login (role will be set to null/pending)
-      allow create: if isAuthenticated() && request.auth.uid == uid;
+      // Allow creating own profile on first login.
+      // role must be null (pending) — prevents self-granting admin on creation.
+      allow create: if isAuthenticated()
+        && request.auth.uid == uid
+        && (!('role' in request.resource.data) || request.resource.data.role == null);
     }
 
     // -------------------------------------------------------------------------
