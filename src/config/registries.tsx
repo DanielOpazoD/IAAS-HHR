@@ -42,7 +42,6 @@ export interface FilterDef {
 export interface RegistryConfig<T extends BaseRecord> {
   collectionName: string
   title: string
-  subtitle: (anio: number) => string
   entityName: { singular: string; plural: string }
   columns: ColumnDef<T & { id: string }>[]
   FormComponent: React.ComponentType<FormComponentProps<T>>
@@ -64,7 +63,6 @@ import { TIPOS_CIRUGIA } from '@/utils/constants'
 export const cirugiaConfig: RegistryConfig<CirugiaTrazadora> = {
   collectionName: 'cirugias',
   title: 'Cirugías Trazadoras',
-  subtitle: (anio) => `Fuente: Drive pabellón / Vigilancia epidemiológica - ${anio}`,
   entityName: { singular: 'Cirugía', plural: 'cirugías' },
   hasMonthFilter: true,
   filterKey: 'mes',
@@ -91,7 +89,6 @@ import { exportPartos } from '@/services/excel/partosExport'
 export const partoConfig: RegistryConfig<PartoCesarea> = {
   collectionName: 'partos',
   title: 'Endometritis Puerperal',
-  subtitle: (anio) => `Partos / Cesárea - ${anio}`,
   entityName: { singular: 'Parto/Cesárea', plural: 'partos' },
   hasMonthFilter: true,
   filterKey: 'mes',
@@ -117,7 +114,6 @@ import { exportDip } from '@/services/excel/dipExport'
 export const dipConfig: RegistryConfig<DispositivoInvasivo> = {
   collectionName: 'dip',
   title: 'Dispositivos Invasivos Permanentes (DIP)',
-  subtitle: (anio) => `${anio}`,
   entityName: { singular: 'DIP', plural: 'dispositivos' },
   hasMonthFilter: true,
   filterKey: 'mes',
@@ -146,7 +142,6 @@ import { exportArepi } from '@/services/excel/arepiExport'
 export const arepiConfig: RegistryConfig<AgenteRiesgoEpidemico> = {
   collectionName: 'arepi',
   title: 'Agentes de Riesgo Epidémico (AREpi)',
-  subtitle: (anio) => `Solicitud y resultados de exámenes, ficha clínica - ${anio}`,
   entityName: { singular: 'AREpi', plural: 'agentes' },
   hasMonthFilter: false,
   FormComponent: ArepiForm,
@@ -170,7 +165,6 @@ import { exportRegistroIaas } from '@/services/excel/registroExport'
 export const registroIaasConfig: RegistryConfig<RegistroIAAS> = {
   collectionName: 'registroIaas',
   title: 'Registro IAAS',
-  subtitle: (anio) => `${anio}`,
   entityName: { singular: 'Registro IAAS', plural: 'infecciones' },
   hasMonthFilter: true,
   filterKey: 'mes',

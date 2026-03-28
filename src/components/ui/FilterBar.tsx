@@ -1,9 +1,4 @@
-import { MESES } from '@/utils/constants'
-
 interface FilterBarProps {
-  hasMonthFilter?: boolean
-  filterMes: string
-  onFilterMesChange: (mes: string) => void
   secondaryFilter?: {
     key: string
     label: string
@@ -15,42 +10,27 @@ interface FilterBarProps {
   totalCount: number
 }
 
-/** Reusable filter bar extracted from GenericDataPage */
+/** Renders secondary (non-month) filters below the page title. Month filtering is handled by the Header slot. */
 export default function FilterBar({
-  hasMonthFilter,
-  filterMes,
-  onFilterMesChange,
   secondaryFilter,
   filterSecondary,
   onFilterSecondaryChange,
   filteredCount,
   totalCount,
 }: FilterBarProps) {
-  const hasActiveFilter = filterMes || filterSecondary
-
   return (
     <div className="mb-4 flex items-center gap-3">
-      {hasMonthFilter && (
-        <select
-          value={filterMes}
-          onChange={(e) => onFilterMesChange(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
-        >
-          <option value="">Todos los meses</option>
-          {MESES.map((m) => <option key={m} value={m}>{m}</option>)}
-        </select>
-      )}
       {secondaryFilter && (
         <select
           value={filterSecondary}
           onChange={(e) => onFilterSecondaryChange(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
         >
           <option value="">{`Todos: ${secondaryFilter.label}`}</option>
           {secondaryFilter.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       )}
-      {hasActiveFilter && (
+      {filterSecondary && (
         <span className="text-xs text-gray-500">
           {filteredCount} de {totalCount} registros
         </span>

@@ -7,22 +7,24 @@ import { useToastContext } from '@/context/ToastContext'
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges'
 import { useDuplicateCheck } from '@/hooks/useDuplicateCheck'
 import { useAuth } from '@/context/AuthContext'
-import { getErrorMessage } from '@/utils/errors'
-import PageHeader from '@/components/layout/PageHeader'
 import { useHeaderSlot } from '@/context/HeaderSlotContext'
+import { getErrorMessage } from '@/utils/errors'
 import { MESES } from '@/utils/constants'
+import PageHeader from '@/components/layout/PageHeader'
 import DataTable from '@/components/ui/DataTable'
-import Modal from '@/components/ui/Modal'
 import SkeletonTable from '@/components/ui/SkeletonTable'
 import FilterBar from '@/components/ui/FilterBar'
+import GenericDataModal from '@/components/pages/GenericDataModal'
 import type { RegistryConfig } from '@/config/registries'
 
 /**
- * Generic CRUD page component. Driven by a declarative RegistryConfig.
+ * Generic CRUD page — driven by a declarative RegistryConfig.
  *
  * Responsibilities:
- * - Orchestrates data flow between collection hook, table, modal, and form
- * - Delegates filtering to FilterBar, shortcuts to useKeyboardShortcut
+ * - Data fetching, filtering and search state
+ * - CRUD handlers (add / update / remove)
+ * - Keyboard shortcuts and header slot injection
+ * - Delegates modal rendering to GenericDataModal
  */
 // `any` required: TS interfaces lack index signatures needed by Record<string, unknown>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +49,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
   const { setSlot, clearSlot } = useHeaderSlot()
   useUnsavedChanges(modalOpen)
 
-  // Inyecta controles (mes + búsqueda) en el Header
+  // Inject month selector + search into the Header slot
   useEffect(() => {
     setSlot(
       <div className="flex items-center gap-2">
@@ -165,7 +167,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
     setEditing(undefined)
   }
 
-  // Keyboard shortcut: Ctrl+N to add new record
+  // Ctrl+N → open new record modal
   useKeyboardShortcut('n', openNew, { ctrl: true, disabled: modalOpen || !writable })
 
   if (loading) {
@@ -177,21 +179,16 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
     )
   }
 
-  const { FormComponent } = config
-  const showFilters = config.secondaryFilter
-
   return (
     <>
       <PageHeader
         title={config.title}
-                onAdd={writable ? openNew : undefined}
+        onAdd={writable ? openNew : undefined}
         onExport={handleExport}
       />
 
-      {showFilters && (
+      {config.secondaryFilter && (
         <FilterBar
-          filterMes=""
-          onFilterMesChange={() => {}}
           secondaryFilter={config.secondaryFilter}
           filterSecondary={filterSecondary}
           onFilterSecondaryChange={setFilterSecondary}
@@ -200,7 +197,7 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         />
       )}
 
-      {/* Contador de resultados cuando hay filtro de mes activo y no hay filtro secundario */}
+      {/* Record count when month filter is active but no secondary filter */}
       {config.hasMonthFilter && filterMes && !config.secondaryFilter && (
         <p className="mb-4 text-xs text-gray-500">{filtered.length} de {data.length} registros</p>
       )}
@@ -215,30 +212,18 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         onSearchChange={setSearch}
       />
 
-      <Modal
+      <GenericDataModal
+        config={config}
         open={modalOpen}
         onClose={closeModal}
-        title={editing ? `Editar ${config.entityName.singular}` : `Nuev${config.entityName.singular.endsWith('a') || config.entityName.singular === 'Cirugía' ? 'a' : 'o'} ${config.entityName.singular}`}
-        wide={config.wideModal}
-      >
-        {duplicateWarning && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-start gap-2">
-            <svg className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {duplicateWarning}
-          </div>
-        )}
-        <FormComponent
-          initial={editing}
-          anio={anio}
-          onSubmit={handleSubmit}
-          onCancel={closeModal}
-          nextNumero={nextNumero}
-          loading={saving}
-          onFormChange={setFormValues}
-        />
-      </Modal>
+        editing={editing}
+        anio={anio}
+        onSubmit={handleSubmit}
+        saving={saving}
+        duplicateWarning={duplicateWarning}
+        onFormChange={setFormValues}
+        nextNumero={nextNumero}
+      />
 
       {ConfirmDialog}
     </>
