@@ -1,9 +1,12 @@
 import { APP_CONFIG } from '@/utils/constants'
-import { useState, memo } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useToastContext } from '@/context/ToastContext'
-import { useCollection } from '@/hooks/useCollection'
 import { useConsolidacionData } from '@/hooks/useConsolidacionData'
+import { isFirebaseConfigured } from '@/config/firebase'
+import { getAll } from '@/services/firestore'
+import { getLocalKey, loadLocal } from '@/utils/localStorage'
+import { where, orderBy } from 'firebase/firestore'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo } from '@/types'
 import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
 import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '@/utils/rates'
@@ -118,15 +121,35 @@ export default function ConsolidacionPage({ anio: propAnio, preloaded }: Consoli
   const [activeTab, setActiveTab] = useState<TabId>('dip')
   const meses = MESES_POR_CUATRIMESTRE[cuatrimestre]
 
-  // Only subscribe to collections not already provided by the parent.
-  // This prevents duplicate Firestore subscriptions when embedded in DashboardPage.
-  const { data: ownCirugias } = useCollection<CirugiaTrazadora>('cirugias', preloaded ? undefined : anio)
-  const { data: ownPartos } = useCollection<PartoCesarea>('partos', preloaded ? undefined : anio)
-  const { data: ownDip } = useCollection<DispositivoInvasivo>('dip', preloaded ? undefined : anio)
+  // Use preloaded data from parent or fetch via one-shot reads (no onSnapshot listeners)
+  const [ownData, setOwnData] = useState<{
+    cirugias: (CirugiaTrazadora & { id: string })[]
+    partos: (PartoCesarea & { id: string })[]
+    dip: (DispositivoInvasivo & { id: string })[]
+  }>({ cirugias: [], partos: [], dip: [] })
 
-  const cirugias = preloaded?.cirugias ?? ownCirugias
-  const partos = preloaded?.partos ?? ownPartos
-  const dip = preloaded?.dip ?? ownDip
+  useEffect(() => {
+    if (preloaded) return // Skip fetch when parent provides data
+    if (!isFirebaseConfigured) {
+      setOwnData({
+        cirugias: loadLocal<CirugiaTrazadora>(getLocalKey('cirugias', anio)),
+        partos: loadLocal<PartoCesarea>(getLocalKey('partos', anio)),
+        dip: loadLocal<DispositivoInvasivo>(getLocalKey('dip', anio)),
+      })
+      return
+    }
+    const constraints = [where('anio', '==', anio), orderBy('createdAt', 'desc')]
+    Promise.all([
+      getAll<CirugiaTrazadora>('cirugias', constraints),
+      getAll<PartoCesarea>('partos', constraints),
+      getAll<DispositivoInvasivo>('dip', constraints),
+    ]).then(([c, p, d]) => setOwnData({ cirugias: c, partos: p, dip: d }))
+      .catch((err) => console.error('[Consolidacion] Failed to load data:', err))
+  }, [anio, preloaded])
+
+  const cirugias = preloaded?.cirugias ?? ownData.cirugias
+  const partos = preloaded?.partos ?? ownData.partos
+  const dip = preloaded?.dip ?? ownData.dip
 
   const { getDipData, getArepiData, getCxPartosData } = useConsolidacionData(anio, cuatrimestre, cirugias, partos, dip)
 

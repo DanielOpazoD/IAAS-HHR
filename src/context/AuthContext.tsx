@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- Provider + hook is a standard React pattern */
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User } from 'firebase/auth'
-import { isFirebaseConfigured, getFirebaseAuth } from '@/config/firebase'
+import { isFirebaseConfigured, getFirebaseAuth, disableFirestoreNetwork, enableFirestoreNetwork } from '@/config/firebase'
 import type { UserRole } from '@/types/roles'
 import { canWriteCollection } from '@/types/roles'
 import * as userService from '@/services/userService'
@@ -108,10 +108,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(null)
       return
     }
+    // Disable Firestore network BEFORE signing out.
+    // This gracefully stops all onSnapshot listeners and prevents
+    // watch stream assertion errors (b815/ca9) from concurrent teardown.
+    try { await disableFirestoreNetwork() } catch { /* best effort */ }
     const authInstance = await getFirebaseAuth()
     if (!authInstance) return
     const { signOut: fbSignOut } = await import('firebase/auth')
     await fbSignOut(authInstance)
+    // Re-enable network for next login
+    try { await enableFirestoreNetwork() } catch { /* best effort */ }
   }
 
   const canWrite = (collection: string): boolean => {

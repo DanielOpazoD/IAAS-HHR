@@ -1,5 +1,5 @@
 import { initializeApp, FirebaseApp } from 'firebase/app'
-import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, Firestore } from 'firebase/firestore'
+import { initializeFirestore, memoryLocalCache, Firestore } from 'firebase/firestore'
 import type { Auth } from 'firebase/auth'
 
 /** True when Firebase env vars are present (false = demo/localStorage mode) */
@@ -20,17 +20,25 @@ let auth: Auth | null = null
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig)
-  // Enable IndexedDB persistence for offline-first / stale-while-revalidate:
-  // - onSnapshot fires immediately with cached data (instant UI)
-  // - then fires again when server data arrives (background sync)
-  // - works fully offline (critical for remote island hospital)
+  // Use in-memory cache instead of IndexedDB persistence.
   //
-  // Uses persistentSingleTabManager instead of persistentMultipleTabManager
-  // to avoid Firestore internal assertion failures (ID: b815/ca9) that occur
-  // when using multi-tab coordination with lazy-loaded components + Vite HMR.
-  // The app is designed for single-tab use in a hospital context.
+  // Why NOT IndexedDB persistence:
+  // - persistentLocalCache causes Firestore INTERNAL ASSERTION FAILED (b815/ca9)
+  //   when multiple onSnapshot listeners are torn down simultaneously (logout,
+  //   navigation between pages with lazy-loaded components, Vite HMR).
+  // - Both persistentMultipleTabManager and persistentSingleTabManager trigger it.
+  // - The bug is in Firestore's watch stream TargetState coordination with
+  //   the IndexedDB persistence layer during concurrent unsubscribes.
+  //
+  // memoryLocalCache still provides:
+  // - Instant re-renders from in-memory cache when navigating between pages
+  // - Automatic background sync when server data changes
+  // - No b815/ca9 assertion errors
+  //
+  // Trade-off: data reloads from server on each app open (acceptable for
+  // a hospital with internet; ~200-500 records loads in <1s).
   db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: true }) }),
+    localCache: memoryLocalCache(),
   })
 }
 
@@ -43,4 +51,24 @@ export async function getFirebaseAuth(): Promise<Auth | null> {
   const { getAuth } = await import('firebase/auth')
   auth = getAuth(app!)
   return auth
+}
+
+/**
+ * Gracefully stop all Firestore network connections.
+ * Call before signOut to prevent watch stream assertion errors
+ * when multiple listeners are torn down simultaneously.
+ */
+export async function disableFirestoreNetwork(): Promise<void> {
+  if (!db) return
+  const { disableNetwork } = await import('firebase/firestore')
+  await disableNetwork(db)
+}
+
+/**
+ * Re-enable Firestore network after a previous disableFirestoreNetwork() call.
+ */
+export async function enableFirestoreNetwork(): Promise<void> {
+  if (!db) return
+  const { enableNetwork } = await import('firebase/firestore')
+  await enableNetwork(db)
 }

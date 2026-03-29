@@ -1,5 +1,8 @@
-import { useMemo, useCallback } from 'react'
-import { useCollection } from '@/hooks/useCollection'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { isFirebaseConfigured } from '@/config/firebase'
+import { getAll } from '@/services/firestore'
+import { getLocalKey, loadLocal } from '@/utils/localStorage'
+import { where, orderBy } from 'firebase/firestore'
 import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, DatosConsolidacion } from '@/types'
 import { CX_PARTOS_SOURCE_MAP } from '@/utils/constants'
 
@@ -7,13 +10,8 @@ import { CX_PARTOS_SOURCE_MAP } from '@/utils/constants'
  * Encapsulates consolidation rate calculation logic.
  *
  * Receives cirugias/partos/dip as parameters (not fetched here) to avoid
- * duplicate Firestore subscriptions when rendered inside DashboardPage, which
- * already subscribes to those same collections. Duplicate simultaneous
- * onSnapshot subscriptions with IndexedDB persistence trigger Firestore
- * internal assertion failures (ID: b815/ca9).
- *
- * Only `consolidacion` (manual override data) is fetched here since no
- * other page subscribes to it.
+ * duplicate data fetching. Only `consolidacion` (manual override data)
+ * is fetched here via one-shot read (getDocs, no onSnapshot listener).
  */
 export function useConsolidacionData(
   anio: number,
@@ -22,7 +20,18 @@ export function useConsolidacionData(
   partos: (PartoCesarea & { id: string })[],
   dip: (DispositivoInvasivo & { id: string })[]
 ) {
-  const { data: consolidacion } = useCollection<DatosConsolidacion>('consolidacion', anio)
+  const [consolidacion, setConsolidacion] = useState<(DatosConsolidacion & { id: string })[]>([])
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setConsolidacion(loadLocal<DatosConsolidacion>(getLocalKey('consolidacion', anio)))
+      return
+    }
+    const constraints = [where('anio', '==', anio), orderBy('createdAt', 'desc')]
+    getAll<DatosConsolidacion>('consolidacion', constraints)
+      .then(setConsolidacion)
+      .catch((err) => console.error('[Consolidacion] Failed to load overrides:', err))
+  }, [anio])
 
   const manualData = useMemo(
     () => consolidacion.find((c) => c.cuatrimestre === cuatrimestre),
