@@ -23,6 +23,29 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   return snap.data() as UserProfile
 }
 
+/**
+ * Check if the admin bootstrap marker exists.
+ * If it doesn't, the first user to register becomes admin.
+ */
+async function isAdminBootstrapped(): Promise<boolean> {
+  if (!isFirebaseConfigured) return false
+  const { doc, getDoc } = await import('firebase/firestore')
+  const snap = await getDoc(doc(db!, 'meta', 'adminBootstrapped'))
+  return snap.exists()
+}
+
+/**
+ * Mark the admin as bootstrapped so no future users can self-assign admin.
+ */
+async function markAdminBootstrapped(uid: string): Promise<void> {
+  if (!isFirebaseConfigured) return
+  const { doc, setDoc } = await import('firebase/firestore')
+  await setDoc(doc(db!, 'meta', 'adminBootstrapped'), {
+    uid,
+    bootstrappedAt: new Date().toISOString(),
+  })
+}
+
 export async function createUserProfile(profile: UserProfile): Promise<void> {
   if (!isFirebaseConfigured) {
     const users = loadLocalUsers()
@@ -30,8 +53,45 @@ export async function createUserProfile(profile: UserProfile): Promise<void> {
     saveLocalUsers(users)
     return
   }
+
+  // Bootstrap: if no admin exists yet, make this user the admin
+  const bootstrapped = await isAdminBootstrapped()
+  if (!bootstrapped) {
+    console.info('[Auth] No admin exists yet — bootstrapping first user as admin:', profile.email)
+    profile = { ...profile, role: 'admin' as UserRole }
+  }
+
   const { doc, setDoc } = await import('firebase/firestore')
   await setDoc(doc(db!, 'users', profile.uid), profile)
+
+  // If we just bootstrapped, mark it so future users don't get auto-admin
+  if (!bootstrapped) {
+    try {
+      await markAdminBootstrapped(profile.uid)
+    } catch (err) {
+      console.warn('[Auth] Failed to mark admin bootstrapped (non-critical):', err)
+    }
+  }
+}
+
+/**
+ * Try to bootstrap an existing user as admin (if no admin exists yet).
+ * Returns true if the user was promoted to admin.
+ */
+export async function tryBootstrapAdmin(uid: string): Promise<boolean> {
+  if (!isFirebaseConfigured) return false
+  const bootstrapped = await isAdminBootstrapped()
+  if (bootstrapped) return false
+
+  console.info('[Auth] No admin exists yet — promoting existing user to admin')
+  const { doc, updateDoc } = await import('firebase/firestore')
+  await updateDoc(doc(db!, 'users', uid), { role: 'admin' })
+  try {
+    await markAdminBootstrapped(uid)
+  } catch (err) {
+    console.warn('[Auth] Failed to mark admin bootstrapped (non-critical):', err)
+  }
+  return true
 }
 
 export async function updateUserRole(uid: string, role: UserRole): Promise<void> {

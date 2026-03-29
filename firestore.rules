@@ -43,14 +43,38 @@ service cloud.firestore {
       allow get: if isAuthenticated() && request.auth.uid == uid;
       // Collection query (list all users): only admins
       allow list: if isAuthenticated() && isAdmin();
-      // Only admin can update/delete profiles (assign roles)
-      allow update, delete: if isAuthenticated() && isAdmin()
-        && isValidRole(request.resource.data.get('role', null));
-      // Any authenticated user can create their own profile on first login
-      // (role must be null — prevents self-granting admin)
+      // Admin can update any profile (assign roles); users can update THEIR OWN non-role fields;
+      // Bootstrap: a user can self-promote to admin if no bootstrap marker exists yet
+      allow update: if isAuthenticated()
+        && (
+          (isAdmin() && isValidRole(request.resource.data.get('role', null)))
+          || (request.auth.uid == uid
+              && request.resource.data.role == resource.data.role)
+          || (request.auth.uid == uid
+              && request.resource.data.role == 'admin'
+              && !exists(/databases/$(database)/documents/meta/adminBootstrapped))
+        );
+      // Only admin can delete profiles
+      allow delete: if isAuthenticated() && isAdmin();
+      // Any authenticated user can create their own profile on first login.
+      // The profile can have role:'admin' ONLY if no admin document exists yet
+      // (bootstrap mechanism for the very first user).
       allow create: if isAuthenticated()
         && request.auth.uid == uid
-        && (!('role' in request.resource.data) || request.resource.data.role == null);
+        && (
+          (!('role' in request.resource.data) || request.resource.data.role == null)
+          || (request.resource.data.role == 'admin'
+              && !exists(/databases/$(database)/documents/meta/adminBootstrapped))
+        );
+    }
+
+    // Meta document to track whether the initial admin has been bootstrapped.
+    // Once created, no new users can self-assign admin via the create rule.
+    match /meta/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && docId == 'adminBootstrapped'
+        && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if false;
     }
 
     // -------------------------------------------------------------------------

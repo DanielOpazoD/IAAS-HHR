@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             let profile = await userService.getUserProfile(u.uid)
             if (!profile) {
-              // First login: create profile with null role (pending approval)
+              // First login: create profile (bootstrap may auto-assign admin)
               profile = {
                 uid: u.uid,
                 email: u.email ?? '',
@@ -55,9 +55,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 createdAt: new Date().toISOString(),
               }
               await userService.createUserProfile(profile)
+              // Re-read in case bootstrap assigned admin role
+              profile = await userService.getUserProfile(u.uid) ?? profile
+            } else if (!profile.role) {
+              // Profile exists but has no role — try bootstrap (first admin)
+              const bootstrapped = await userService.tryBootstrapAdmin(u.uid)
+              if (bootstrapped) {
+                profile = { ...profile, role: 'admin' as UserRole }
+              }
             }
+            console.info('[Auth] Profile loaded:', { uid: u.uid, role: profile.role, email: profile.email })
             setRole(profile.role)
-          } catch {
+          } catch (err) {
+            console.error('[Auth] Failed to load/create profile:', err)
             setRole(null)
           }
         } else {
