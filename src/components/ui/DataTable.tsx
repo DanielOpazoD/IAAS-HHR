@@ -16,6 +16,9 @@ interface DataTableProps<T> {
   onEdit?: (item: T) => void
   onDelete?: (item: T) => void
   emptyMessage?: string
+  /** Optional CTA shown in empty state (e.g. "Agregar primer registro") */
+  onEmptyAction?: () => void
+  emptyActionLabel?: string
   searchable?: boolean
   searchKeys?: string[]
   pageSize?: number
@@ -34,6 +37,8 @@ export default function DataTable<T extends { id?: string }>({
   onEdit,
   onDelete,
   emptyMessage = 'No hay registros',
+  onEmptyAction,
+  emptyActionLabel = 'Agregar primer registro',
   searchable = true,
   searchKeys = ['nombre', 'rut'],
   pageSize = PAGE_SIZE_DEFAULT,
@@ -103,12 +108,21 @@ export default function DataTable<T extends { id?: string }>({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center" data-testid="empty-state">
-        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Icon name="document" className="w-10 h-10 text-gray-300" strokeWidth={1} />
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 px-8 text-center" data-testid="empty-state">
+        <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Icon name="document" className="w-8 h-8 text-gray-300" strokeWidth={1} />
         </div>
-        <p className="text-gray-500 font-semibold mb-1" data-testid="empty-message">{emptyMessage}</p>
-        <p className="text-xs text-gray-300">Los registros apareceran aqui al ser agregados</p>
+        <p className="text-gray-700 font-semibold mb-1" data-testid="empty-message">{emptyMessage}</p>
+        <p className="text-xs text-gray-400 mb-5">Los registros aparecerán aquí al ser agregados</p>
+        {onEmptyAction && (
+          <button
+            onClick={onEmptyAction}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors"
+          >
+            <Icon name="plus" className="w-4 h-4" />
+            {emptyActionLabel}
+          </button>
+        )}
       </div>
     )
   }
@@ -167,9 +181,9 @@ export default function DataTable<T extends { id?: string }>({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-100">
             {paginatedData.map((item, idx) => (
-              <tr key={item.id || idx} className="hover:bg-primary-50/30 transition-colors">
+              <tr key={item.id || idx} className={`hover:bg-primary-50/40 transition-colors ${idx % 2 === 1 ? 'bg-gray-50/50' : ''}`}>
                 {columns.map((col) => (
                   <td key={col.key} className={`px-4 py-3 text-gray-700 ${col.className || ''}`}>
                     {col.render

@@ -18,8 +18,8 @@ describe('Badge', () => {
   it('shows green style for negative value (NO) with default positiveColor', () => {
     const { container } = render(<Badge value="NO" />)
     const span = container.querySelector('span')!
-    expect(span.className).toContain('bg-green-100')
-    expect(span.className).toContain('text-green-700')
+    expect(span.className).toContain('bg-emerald-50')
+    expect(span.className).toContain('text-emerald-700')
   })
 
   it('shows red style for SI with gray positiveColor', () => {
@@ -31,7 +31,7 @@ describe('Badge', () => {
   it('shows gray style for NO with gray positiveColor', () => {
     const { container } = render(<Badge value="NO" positiveColor="gray" />)
     const span = container.querySelector('span')!
-    expect(span.className).toContain('text-gray-500')
-    expect(span.className).not.toContain('bg-green-100')
+    expect(span.className).toContain('text-gray-400')
+    expect(span.className).not.toContain('bg-emerald')
   })
 })

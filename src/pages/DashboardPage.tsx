@@ -16,18 +16,49 @@ const TABS = [
 ] as const
 type TabId = typeof TABS[number]['id']
 
-function StatCard({ label, count, icon, accent }: { label: string; count: number; icon: string; accent: string }) {
+interface StatCardProps {
+  label: string
+  count: number
+  icon: string
+  accent: string
+  /** Count for current month */
+  currentMonth?: number
+  /** Count for previous month */
+  prevMonth?: number
+}
+
+function StatCard({ label, count, icon, accent, currentMonth, prevMonth }: StatCardProps) {
+  const hasTrend = currentMonth !== undefined && prevMonth !== undefined
+  const diff = hasTrend ? currentMonth - prevMonth : 0
+  const isUp = diff > 0
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${accent}`}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center justify-between mb-2">
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent}`}>
+          <svg className="w-4.5 h-4.5 w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={icon} />
           </svg>
         </div>
-        <span className="text-3xl font-bold text-gray-800">{count}</span>
+        <span className="text-3xl font-bold text-gray-800 tabular-nums">{count}</span>
       </div>
-      <p className="text-sm text-gray-500 font-medium">{label}</p>
+      <p className="text-xs text-gray-500 font-medium leading-tight mb-2">{label}</p>
+      {hasTrend && (
+        <div className="flex items-center gap-1.5 pt-2 border-t border-gray-50">
+          {diff === 0 ? (
+            <span className="text-xs text-gray-400">Sin cambios este mes</span>
+          ) : (
+            <>
+              <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
+                isUp ? 'text-amber-600' : 'text-emerald-600'
+              }`}>
+                {isUp ? '▲' : '▼'} {Math.abs(diff)}
+              </span>
+              <span className="text-xs text-gray-400">vs mes anterior</span>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -63,7 +94,7 @@ export default function DashboardPage() {
   const { data: arepi } = useCollection<AgenteRiesgoEpidemico>('arepi', anio)
   const { data: iaas } = useCollection<RegistroIAAS>('registroIaas', anio)
 
-  const { ihoCount, iaasPartos, fallecidos, totalRegistros, monthlyData, maxMonthly } = useMemo(() => {
+  const { ihoCount, iaasPartos, fallecidos, totalRegistros, monthlyData, maxMonthly, trends } = useMemo(() => {
     const iho = cirugias.filter((c) => c.iho === 'SI').length
     const iaasP = partos.filter((p) => p.signosSintomasIAAS === 'SI').length
     const fall = iaas.filter((r) => r.fallecido === 'SI').length
@@ -77,7 +108,39 @@ export default function DashboardPage() {
     }))
     const maxM = Math.max(...monthly.map((m) => m.value), 1)
 
-    return { ihoCount: iho, iaasPartos: iaasP, fallecidos: fall, totalRegistros: total, monthlyData: monthly, maxMonthly: maxM }
+    // Trend: current month vs previous month counts per collection
+    const now = new Date()
+    const curMes = MESES[now.getMonth()]
+    const prevMes = MESES[now.getMonth() === 0 ? 11 : now.getMonth() - 1]
+    const trend = (arr: { mes?: string; fechaVE?: string }[]) => ({
+      current: arr.filter((r) => r.mes === curMes).length,
+      prev: arr.filter((r) => r.mes === prevMes).length,
+    })
+    // AREpi uses fechaVE (no mes field) — count by matching MESES index against date month
+    const trendArepi = (arr: { fechaVE?: string }[]) => {
+      const curIdx = now.getMonth()
+      const prevIdx = now.getMonth() === 0 ? 11 : now.getMonth() - 1
+      return {
+        current: arr.filter((r) => r.fechaVE && new Date(r.fechaVE).getMonth() === curIdx).length,
+        prev: arr.filter((r) => r.fechaVE && new Date(r.fechaVE).getMonth() === prevIdx).length,
+      }
+    }
+
+    return {
+      ihoCount: iho,
+      iaasPartos: iaasP,
+      fallecidos: fall,
+      totalRegistros: total,
+      monthlyData: monthly,
+      maxMonthly: maxM,
+      trends: {
+        cirugias: trend(cirugias),
+        partos: trend(partos),
+        dip: trend(dip),
+        arepi: trendArepi(arepi),
+        iaas: trend(iaas),
+      },
+    }
   }, [cirugias, partos, dip, arepi, iaas])
 
   const { addToast } = useToastContext()
@@ -137,11 +200,11 @@ export default function DashboardPage() {
             <div className="space-y-5">
               {/* Stat cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <StatCard label="Cirugías Trazadoras" count={cirugias.length} icon="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" accent="bg-blue-50 text-blue-600" />
-                <StatCard label="Partos / Cesárea" count={partos.length} icon="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" accent="bg-pink-50 text-pink-600" />
-                <StatCard label="DIP" count={dip.length} icon="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" accent="bg-amber-50 text-amber-600" />
-                <StatCard label="AREpi" count={arepi.length} icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" accent="bg-purple-50 text-purple-600" />
-                <StatCard label="Registros IAAS" count={iaas.length} icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" accent="bg-teal-50 text-teal-600" />
+                <StatCard label="Cirugías Trazadoras" count={cirugias.length} icon="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" accent="bg-blue-50 text-blue-600" currentMonth={trends.cirugias.current} prevMonth={trends.cirugias.prev} />
+                <StatCard label="Partos / Cesárea" count={partos.length} icon="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" accent="bg-pink-50 text-pink-600" currentMonth={trends.partos.current} prevMonth={trends.partos.prev} />
+                <StatCard label="DIP" count={dip.length} icon="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" accent="bg-amber-50 text-amber-600" currentMonth={trends.dip.current} prevMonth={trends.dip.prev} />
+                <StatCard label="AREpi" count={arepi.length} icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" accent="bg-purple-50 text-purple-600" currentMonth={trends.arepi.current} prevMonth={trends.arepi.prev} />
+                <StatCard label="Registros IAAS" count={iaas.length} icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" accent="bg-teal-50 text-teal-600" currentMonth={trends.iaas.current} prevMonth={trends.iaas.prev} />
               </div>
 
               {/* Bottom section */}

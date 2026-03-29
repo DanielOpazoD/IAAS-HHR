@@ -26,8 +26,9 @@ const adminMenuItems = [
 
 // ─── Shared nav item base styles ─────────────────────────────
 
-const BASE = 'relative flex items-center gap-3 mx-2 px-3 py-2 text-[13px] rounded-lg transition-all'
+const BASE = 'relative flex items-center gap-3 mx-2 px-3 py-2 text-sm rounded-lg transition-all'
 const ACTIVE = 'bg-stone-200/80 text-gray-900 font-medium'
+const CHILD_ACTIVE_PARENT = 'bg-stone-100/80 text-gray-700 font-medium' // parent when a child is active
 const INACTIVE = 'text-gray-600 hover:bg-stone-200/50 hover:text-gray-800'
 
 // ─── Components ──────────────────────────────────────────────
@@ -47,14 +48,19 @@ function ParentNavItem({ collapsed, isChildActive }: { collapsed: boolean; isChi
       to="/"
       end
       title={collapsed ? 'Vigilancia Epidemiológica' : undefined}
-      className={({ isActive }) =>
-        `${BASE} ${isActive || isChildActive ? ACTIVE : INACTIVE} ${collapsed ? 'justify-center' : ''}`
-      }
+      className={({ isActive }) => {
+        const style = isActive ? ACTIVE : isChildActive ? CHILD_ACTIVE_PARENT : INACTIVE
+        return `${BASE} ${style} ${collapsed ? 'justify-center' : ''}`
+      }}
     >
       {({ isActive }) => (
         <>
-          {(isActive || isChildActive) && !collapsed && (
+          {/* Orange bar: full when on /, dimmed when child is active */}
+          {isActive && !collapsed && (
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary-500 rounded-full" />
+          )}
+          {isChildActive && !isActive && !collapsed && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-primary-300 rounded-full" />
           )}
           <NavIcon d={VIGILANCIA_ICON} />
           {!collapsed && <span className="truncate font-medium">Vigilancia Epidemiológica</span>}
@@ -198,7 +204,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="min-w-0">
             <h1 className="text-sm font-semibold text-gray-800 tracking-tight truncate">{APP_CONFIG.hospitalName}</h1>
-            <p className="text-[11px] text-gray-500 font-medium mt-0.5">{APP_CONFIG.systemName}</p>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">{APP_CONFIG.systemName}</p>
           </div>
         )}
       </div>

@@ -202,6 +202,8 @@ export default function GenericDataPage({ config }: { config: RegistryConfig<any
         onEdit={writable ? handleEdit : undefined}
         onDelete={writable ? handleDelete : undefined}
         emptyMessage={`No hay ${config.entityName.plural} registrad${config.entityName.plural.endsWith('as') ? 'a' : 'o'}s`}
+        onEmptyAction={writable ? openNew : undefined}
+        emptyActionLabel={`Agregar ${config.entityName.singular.toLowerCase()}`}
         search={search}
         onSearchChange={setSearch}
       />

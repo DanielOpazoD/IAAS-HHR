@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useHeaderSlot } from '@/context/HeaderSlotContext'
 import { getCurrentYear } from '@/utils/dates'
@@ -15,9 +16,18 @@ export default function Header({ anio, onAnioChange, onMenuToggle }: HeaderProps
   const { slot } = useHeaderSlot()
   const currentYear = getCurrentYear()
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const main = document.getElementById('main-content')
+    if (!main) return
+    const onScroll = () => setScrolled(main.scrollTop > 4)
+    main.addEventListener('scroll', onScroll, { passive: true })
+    return () => main.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100 px-4 md:px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+    <header className={`bg-white/90 backdrop-blur-sm border-b border-gray-100 px-4 md:px-6 py-3 flex items-center justify-between sticky top-0 z-10 transition-shadow duration-200 ${scrolled ? 'shadow-sm' : ''}`}>
       <div className="flex items-center gap-3">
         {/* Mobile hamburger menu */}
         {onMenuToggle && (
