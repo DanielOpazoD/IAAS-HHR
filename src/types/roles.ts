@@ -44,7 +44,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, {
   admin: {
     canWrite: ['cirugias', 'partos', 'dip', 'arepi', 'registroIaas', 'consolidacion'],
     canRead: ['cirugias', 'partos', 'dip', 'arepi', 'registroIaas', 'consolidacion'],
-    label: 'Enfermera IAAS (Admin)',
+    label: 'Equipo IAAS (Admin)',
   },
   pabellon: {
     canWrite: ['cirugias', 'dip'],

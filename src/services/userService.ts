@@ -116,3 +116,45 @@ export async function getAllUsers(): Promise<UserProfile[]> {
   const snap = await getDocs(collection(db!, 'users'))
   return snap.docs.map((d) => d.data() as UserProfile)
 }
+
+// ---------------------------------------------------------------------------
+// Invitations (pre-authorized users)
+// ---------------------------------------------------------------------------
+
+export interface Invitation {
+  email: string
+  role: UserRole
+  displayName: string
+  invitedAt: string
+  invitedBy: string
+}
+
+export async function getInvitationByEmail(email: string): Promise<Invitation | null> {
+  if (!isFirebaseConfigured) return null
+  const { collection, query, where, getDocs } = await import('firebase/firestore')
+  const snap = await getDocs(query(collection(db!, 'invitations'), where('email', '==', email)))
+  if (snap.empty) return null
+  return snap.docs[0].data() as Invitation
+}
+
+export async function createInvitation(invitation: Invitation): Promise<void> {
+  if (!isFirebaseConfigured) return
+  const { collection, addDoc } = await import('firebase/firestore')
+  await addDoc(collection(db!, 'invitations'), invitation)
+}
+
+export async function deleteInvitationByEmail(email: string): Promise<void> {
+  if (!isFirebaseConfigured) return
+  const { collection, query, where, getDocs, deleteDoc } = await import('firebase/firestore')
+  const snap = await getDocs(query(collection(db!, 'invitations'), where('email', '==', email)))
+  for (const d of snap.docs) {
+    await deleteDoc(d.ref)
+  }
+}
+
+export async function getAllInvitations(): Promise<Invitation[]> {
+  if (!isFirebaseConfigured) return []
+  const { collection, getDocs } = await import('firebase/firestore')
+  const snap = await getDocs(collection(db!, 'invitations'))
+  return snap.docs.map((d) => d.data() as Invitation)
+}

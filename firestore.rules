@@ -57,14 +57,16 @@ service cloud.firestore {
       // Only admin can delete profiles
       allow delete: if isAuthenticated() && isAdmin();
       // Any authenticated user can create their own profile on first login.
-      // The profile can have role:'admin' ONLY if no admin document exists yet
-      // (bootstrap mechanism for the very first user).
+      // Role can be non-null only if:
+      //   a) Bootstrap: role='admin' and no admin bootstrapped yet, OR
+      //   b) Invitation: a valid role is being assigned (invitation checked app-side)
       allow create: if isAuthenticated()
         && request.auth.uid == uid
         && (
           (!('role' in request.resource.data) || request.resource.data.role == null)
           || (request.resource.data.role == 'admin'
               && !exists(/databases/$(database)/documents/meta/adminBootstrapped))
+          || isValidRole(request.resource.data.get('role', null))
         );
     }
 
@@ -75,6 +77,15 @@ service cloud.firestore {
       allow create: if isAuthenticated() && docId == 'adminBootstrapped'
         && request.auth.uid == request.resource.data.uid;
       allow update, delete: if false;
+    }
+
+    // Invitations: pre-authorized users that get a role on first login.
+    // Only admins can create/delete invitations; any authenticated user can read
+    // (needed to check if their email is pre-authorized during login).
+    match /invitations/{id} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isAuthenticated() && isAdmin();
+      allow update: if false;
     }
 
     // -------------------------------------------------------------------------

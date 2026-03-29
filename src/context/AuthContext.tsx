@@ -46,17 +46,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             let profile = await userService.getUserProfile(u.uid)
             if (!profile) {
-              // First login: create profile (bootstrap may auto-assign admin)
+              // Check if this email was pre-authorized via invitation
+              const invitation = await userService.getInvitationByEmail(u.email ?? '')
+              const assignedRole = invitation?.role ?? null
+
+              // First login: create profile (bootstrap or invitation may assign role)
               profile = {
                 uid: u.uid,
                 email: u.email ?? '',
                 displayName: u.displayName ?? '',
-                role: null as unknown as UserRole,
+                role: (assignedRole ?? null) as unknown as UserRole,
                 createdAt: new Date().toISOString(),
               }
               await userService.createUserProfile(profile)
               // Re-read in case bootstrap assigned admin role
               profile = await userService.getUserProfile(u.uid) ?? profile
+
+              // Clean up the invitation if it was used
+              if (invitation) {
+                try { await userService.deleteInvitationByEmail(u.email ?? '') } catch { /* non-critical */ }
+              }
             } else if (!profile.role) {
               // Profile exists but has no role — try bootstrap (first admin)
               const bootstrapped = await userService.tryBootstrapAdmin(u.uid)

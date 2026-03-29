@@ -67,7 +67,12 @@ export default function Header({ anio, onAnioChange, onMenuToggle }: HeaderProps
               <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold">
                 {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm text-gray-600 font-medium">{user.displayName || user.email}</span>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-600 font-medium leading-tight">{user.displayName || user.email}</span>
+                {user.displayName && user.email && (
+                  <span className="text-[11px] text-gray-400 leading-tight">{user.email}</span>
+                )}
+              </div>
             </div>
             <button
               onClick={signOut}
