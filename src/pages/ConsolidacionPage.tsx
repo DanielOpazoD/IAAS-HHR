@@ -1,5 +1,5 @@
 import { APP_CONFIG } from '@/utils/constants'
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect, useMemo, memo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useToastContext } from '@/context/ToastContext'
 import { useConsolidacionData } from '@/hooks/useConsolidacionData'
@@ -122,30 +122,34 @@ export default function ConsolidacionPage({ anio: propAnio, preloaded }: Consoli
   const meses = MESES_POR_CUATRIMESTRE[cuatrimestre]
 
   // Use preloaded data from parent or fetch via one-shot reads (no onSnapshot listeners)
-  const [ownData, setOwnData] = useState<{
-    cirugias: (CirugiaTrazadora & { id: string })[]
-    partos: (PartoCesarea & { id: string })[]
-    dip: (DispositivoInvasivo & { id: string })[]
-  }>({ cirugias: [], partos: [], dip: [] })
+  const emptyData = { cirugias: [] as (CirugiaTrazadora & { id: string })[], partos: [] as (PartoCesarea & { id: string })[], dip: [] as (DispositivoInvasivo & { id: string })[] }
+
+  // Demo mode: derive data synchronously from localStorage (no effect needed)
+  const localData = useMemo(() => {
+    if (preloaded || isFirebaseConfigured) return emptyData
+    return {
+      cirugias: loadLocal<CirugiaTrazadora>(getLocalKey('cirugias', anio)),
+      partos: loadLocal<PartoCesarea>(getLocalKey('partos', anio)),
+      dip: loadLocal<DispositivoInvasivo>(getLocalKey('dip', anio)),
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anio, preloaded])
+
+  // Firebase mode: fetch via async one-shot reads
+  const [firestoreData, setFirestoreData] = useState(emptyData)
 
   useEffect(() => {
-    if (preloaded) return // Skip fetch when parent provides data
-    if (!isFirebaseConfigured) {
-      setOwnData({
-        cirugias: loadLocal<CirugiaTrazadora>(getLocalKey('cirugias', anio)),
-        partos: loadLocal<PartoCesarea>(getLocalKey('partos', anio)),
-        dip: loadLocal<DispositivoInvasivo>(getLocalKey('dip', anio)),
-      })
-      return
-    }
+    if (preloaded || !isFirebaseConfigured) return
     const constraints = [where('anio', '==', anio), orderBy('createdAt', 'desc')]
     Promise.all([
       getAll<CirugiaTrazadora>('cirugias', constraints),
       getAll<PartoCesarea>('partos', constraints),
       getAll<DispositivoInvasivo>('dip', constraints),
-    ]).then(([c, p, d]) => setOwnData({ cirugias: c, partos: p, dip: d }))
+    ]).then(([c, p, d]) => setFirestoreData({ cirugias: c, partos: p, dip: d }))
       .catch((err) => console.error('[Consolidacion] Failed to load data:', err))
   }, [anio, preloaded])
+
+  const ownData = isFirebaseConfigured ? firestoreData : localData
 
   const cirugias = preloaded?.cirugias ?? ownData.cirugias
   const partos = preloaded?.partos ?? ownData.partos

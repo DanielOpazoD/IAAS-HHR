@@ -6,6 +6,12 @@ import type { UserRole } from '@/types/roles'
 import { canWriteCollection } from '@/types/roles'
 import * as userService from '@/services/userService'
 
+/**
+ * Auth error types — allows the UI to differentiate between
+ * "pending approval" (role=null) and "something went wrong" (network/permission error).
+ */
+type AuthError = 'network' | 'permission' | null
+
 interface AuthContextType {
   user: User | null
   loading: boolean
@@ -14,6 +20,8 @@ interface AuthContextType {
   signOut: () => Promise<void>
   isDemo: boolean
   role: UserRole | null
+  /** Non-null when profile loading failed (vs role being legitimately null) */
+  authError: AuthError
   canWrite: (collection: string) => boolean
 }
 
@@ -25,11 +33,19 @@ const demoUser = {
   email: 'demo@hospitalhhr.cl',
 } as unknown as User
 
+/** Classify a Firestore/auth error into a user-meaningful category */
+function classifyError(err: unknown): AuthError {
+  const msg = err instanceof Error ? err.message : String(err)
+  if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) return 'permission'
+  return 'network'
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(isFirebaseConfigured ? null : demoUser)
   const [loading, setLoading] = useState(isFirebaseConfigured)
   const [roleLoading, setRoleLoading] = useState(isFirebaseConfigured)
   const [role, setRole] = useState<UserRole | null>(isFirebaseConfigured ? null : 'admin')
+  const [authError, setAuthError] = useState<AuthError>(null)
 
   useEffect(() => {
     if (!isFirebaseConfigured) return
@@ -42,20 +58,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe = onAuthStateChanged(authInstance, async (u) => {
         setUser(u)
         setRoleLoading(true)
+        setAuthError(null)
         if (u) {
           try {
             let profile = await userService.getUserProfile(u.uid)
             if (!profile) {
               // Check if this email was pre-authorized via invitation
               const invitation = await userService.getInvitationByEmail(u.email ?? '')
-              const assignedRole = invitation?.role ?? null
+              const assignedRole: UserRole | null = invitation?.role ?? null
 
               // First login: create profile (bootstrap or invitation may assign role)
               profile = {
                 uid: u.uid,
                 email: u.email ?? '',
                 displayName: u.displayName ?? '',
-                role: (assignedRole ?? null) as unknown as UserRole,
+                role: assignedRole as UserRole,
                 createdAt: new Date().toISOString(),
               }
               await userService.createUserProfile(profile)
@@ -77,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setRole(profile.role)
           } catch (err) {
             console.error('[Auth] Failed to load/create profile:', err)
+            setAuthError(classifyError(err))
             setRole(null)
           }
         } else {
@@ -126,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, roleLoading, signIn, signOut, isDemo: !isFirebaseConfigured, role, canWrite }}>
+    <AuthContext.Provider value={{ user, loading, roleLoading, signIn, signOut, isDemo: !isFirebaseConfigured, role, authError, canWrite }}>
       {children}
     </AuthContext.Provider>
   )

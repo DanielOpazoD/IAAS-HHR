@@ -18,8 +18,7 @@ const arepiConfig: SheetConfig<AgenteRiesgoEpidemico> = {
   ],
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function buildArepiSheet(data: AgenteRiesgoEpidemico[], anio: number): XLSX.WorkSheet {
+export function buildArepiSheet(data: AgenteRiesgoEpidemico[], _anio: number): XLSX.WorkSheet {
   return buildSheet(data, arepiConfig)
 }
 

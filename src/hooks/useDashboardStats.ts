@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { isFirebaseConfigured } from '@/config/firebase'
 import { getAll } from '@/services/firestore'
 import { getLocalKey, loadLocal } from '@/utils/localStorage'
@@ -14,6 +14,16 @@ interface DashboardData {
   loading: boolean
 }
 
+type Collections = Omit<DashboardData, 'loading'>
+
+const emptyCollections: Collections = {
+  cirugias: [],
+  partos: [],
+  dip: [],
+  arepi: [],
+  iaas: [],
+}
+
 /**
  * Fetches all dashboard data in parallel using one-shot reads (getDocs).
  *
@@ -25,29 +35,28 @@ interface DashboardData {
  * Data is refetched when `anio` changes.
  */
 export function useDashboardStats(anio: number): DashboardData {
-  const [data, setData] = useState<DashboardData>({
-    cirugias: [], partos: [], dip: [], arepi: [], iaas: [],
-    loading: true,
+  // Demo mode: derive data synchronously from localStorage (no effect needed)
+  const localData = useMemo(() => {
+    if (isFirebaseConfigured) return emptyCollections
+    return {
+      cirugias: loadLocal<CirugiaTrazadora>(getLocalKey('cirugias', anio)),
+      partos: loadLocal<PartoCesarea>(getLocalKey('partos', anio)),
+      dip: loadLocal<DispositivoInvasivo>(getLocalKey('dip', anio)),
+      arepi: loadLocal<AgenteRiesgoEpidemico>(getLocalKey('arepi', anio)),
+      iaas: loadLocal<RegistroIAAS>(getLocalKey('registroIaas', anio)),
+    }
+  }, [anio])
+
+  // Firebase mode: async one-shot reads
+  const [result, setResult] = useState<{ data: Collections; loading: boolean }>({
+    data: emptyCollections,
+    loading: isFirebaseConfigured,
   })
 
   useEffect(() => {
+    if (!isFirebaseConfigured) return
     let cancelled = false
-    setData((prev) => ({ ...prev, loading: true }))
 
-    if (!isFirebaseConfigured) {
-      // Demo mode: read from localStorage
-      setData({
-        cirugias: loadLocal<CirugiaTrazadora>(getLocalKey('cirugias', anio)),
-        partos: loadLocal<PartoCesarea>(getLocalKey('partos', anio)),
-        dip: loadLocal<DispositivoInvasivo>(getLocalKey('dip', anio)),
-        arepi: loadLocal<AgenteRiesgoEpidemico>(getLocalKey('arepi', anio)),
-        iaas: loadLocal<RegistroIAAS>(getLocalKey('registroIaas', anio)),
-        loading: false,
-      })
-      return
-    }
-
-    // Parallel one-shot reads — 5 getDocs in parallel, no onSnapshot listeners
     const constraints = [where('anio', '==', anio), orderBy('createdAt', 'desc')]
     Promise.all([
       getAll<CirugiaTrazadora>('cirugias', constraints),
@@ -56,15 +65,18 @@ export function useDashboardStats(anio: number): DashboardData {
       getAll<AgenteRiesgoEpidemico>('arepi', constraints),
       getAll<RegistroIAAS>('registroIaas', constraints),
     ]).then(([cirugias, partos, dip, arepi, iaas]) => {
-      if (cancelled) return
-      setData({ cirugias, partos, dip, arepi, iaas, loading: false })
+      if (!cancelled) {
+        setResult({ data: { cirugias, partos, dip, arepi, iaas }, loading: false })
+      }
     }).catch((err) => {
       console.error('[Dashboard] Failed to load stats:', err)
-      if (!cancelled) setData((prev) => ({ ...prev, loading: false }))
+      if (!cancelled) setResult((prev) => ({ ...prev, loading: false }))
     })
 
     return () => { cancelled = true }
   }, [anio])
 
-  return data
+  const collections = isFirebaseConfigured ? result.data : localData
+  const loading = isFirebaseConfigured ? result.loading : false
+  return { ...collections, loading }
 }

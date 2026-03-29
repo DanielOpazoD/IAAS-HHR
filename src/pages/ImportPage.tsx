@@ -5,7 +5,7 @@ import { isFirebaseConfigured, db } from '@/config/firebase'
 import { useToastContext } from '@/context/ToastContext'
 import { getErrorMessage } from '@/utils/errors'
 import { getLocalKey, loadLocal, saveLocal } from '@/utils/localStorage'
-import * as firestoreService from '@/services/firestore'
+
 
 export default function ImportPage() {
   const navigate = useNavigate()
@@ -89,7 +89,12 @@ export default function ImportPage() {
           }
         }
       } else {
-        // Firebase mode
+        // Firebase mode — atomic batch import.
+        // All collections are written in a single Firestore writeBatch.
+        // If ANY write fails, the entire import rolls back (no partial data).
+        const { writeBatch, doc, collection, Timestamp, waitForPendingWrites, getCountFromServer, query, where } = await import('firebase/firestore')
+
+        const allItems: { collectionName: string; data: Record<string, unknown> }[] = []
         const collections = [
           { name: 'cirugias', data: cirugias },
           { name: 'partos', data: partos },
@@ -100,29 +105,31 @@ export default function ImportPage() {
 
         for (const { name, data } of collections) {
           for (const item of data) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id, ...rest } = item
-            await firestoreService.create(name, rest as Record<string, unknown>)
+            const { id: _id, ...rest } = item
+            allItems.push({ collectionName: name, data: rest as Record<string, unknown> })
           }
         }
 
-        // With offline persistence, addDoc() resolves optimistically before the
-        // server confirms. waitForPendingWrites() blocks until server ACKs all writes.
-        // If the server rejects (e.g. permission-denied), the pending writes are
-        // rolled back and waitForPendingWrites() resolves with nothing pending.
-        // We then do a server-side count to verify data actually reached Firestore.
+        // Firestore batch limit is 500 operations.
+        // Process in chunks, each chunk is atomic.
+        const BATCH_LIMIT = 500
+        for (let i = 0; i < allItems.length; i += BATCH_LIMIT) {
+          const chunk = allItems.slice(i, i + BATCH_LIMIT)
+          const batch = writeBatch(db!)
+          for (const item of chunk) {
+            const docRef = doc(collection(db!, item.collectionName))
+            batch.set(docRef, {
+              ...item.data,
+              createdAt: Timestamp.now(),
+              updatedAt: Timestamp.now(),
+            })
+          }
+          await batch.commit()
+        }
+
+        // Verify data reached the server
         if (db) {
-          const {
-            waitForPendingWrites,
-            getCountFromServer,
-            query,
-            collection,
-            where,
-          } = await import('firebase/firestore')
-
           await waitForPendingWrites(db)
-
-          // Verify at least one collection has data on the server
           const nonEmpty = collections.find((c) => c.data.length > 0)
           if (nonEmpty) {
             const snap = await getCountFromServer(

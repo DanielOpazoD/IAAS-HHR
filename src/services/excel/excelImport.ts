@@ -107,7 +107,8 @@ function toDateStr(val: CellValue): string {
 function normMes(val: CellValue): Mes | '' {
   if (!val) return ''
   const s = String(val).trim()
-  return MESES.find((m) => m.toLowerCase() === s.toLowerCase()) ?? (s as Mes)
+  // Only return a value that is a valid Mes — never cast unknown strings
+  return MESES.find((m) => m.toLowerCase() === s.toLowerCase()) ?? ''
 }
 
 function inferAnio(ws: XLSX.WorkSheet): number {

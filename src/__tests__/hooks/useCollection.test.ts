@@ -118,6 +118,7 @@ describe('useCollection — RBAC permission checks', () => {
       isDemo: true,
       signIn: vi.fn(),
       signOut: vi.fn(),
+      authError: null,
       canWrite: (col: string) => ['cirugias', 'dip'].includes(col),
     })
 

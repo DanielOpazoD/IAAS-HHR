@@ -59,14 +59,16 @@ service cloud.firestore {
       // Any authenticated user can create their own profile on first login.
       // Role can be non-null only if:
       //   a) Bootstrap: role='admin' and no admin bootstrapped yet, OR
-      //   b) Invitation: a valid role is being assigned (invitation checked app-side)
+      //   b) Invitation: an invitation document keyed by the user's email exists
+      //      (only admins can create invitations, so this is secure server-side)
       allow create: if isAuthenticated()
         && request.auth.uid == uid
         && (
           (!('role' in request.resource.data) || request.resource.data.role == null)
           || (request.resource.data.role == 'admin'
               && !exists(/databases/$(database)/documents/meta/adminBootstrapped))
-          || isValidRole(request.resource.data.get('role', null))
+          || (isValidRole(request.resource.data.get('role', null))
+              && exists(/databases/$(database)/documents/invitations/$(request.auth.token.email)))
         );
     }
 
@@ -80,10 +82,13 @@ service cloud.firestore {
     }
 
     // Invitations: pre-authorized users that get a role on first login.
-    // Only admins can create/delete invitations; any authenticated user can read
-    // (needed to check if their email is pre-authorized during login).
-    match /invitations/{id} {
-      allow read: if isAuthenticated();
+    // Documents are keyed by email (e.g. /invitations/user@example.com)
+    // so the create rule for /users can verify existence with exists().
+    // Only admins can create/delete invitations; any authenticated user can
+    // read their own invitation (needed during login).
+    match /invitations/{email} {
+      allow get: if isAuthenticated() && request.auth.token.email == email;
+      allow list: if isAuthenticated() && isAdmin();
       allow create, delete: if isAuthenticated() && isAdmin();
       allow update: if false;
     }

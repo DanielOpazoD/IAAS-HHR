@@ -20,18 +20,24 @@ export function useConsolidacionData(
   partos: (PartoCesarea & { id: string })[],
   dip: (DispositivoInvasivo & { id: string })[]
 ) {
-  const [consolidacion, setConsolidacion] = useState<(DatosConsolidacion & { id: string })[]>([])
+  // Demo mode: derive consolidacion data synchronously from localStorage
+  const localConsolidacion = useMemo(() => {
+    if (isFirebaseConfigured) return [] as (DatosConsolidacion & { id: string })[]
+    return loadLocal<DatosConsolidacion>(getLocalKey('consolidacion', anio))
+  }, [anio])
+
+  // Firebase mode: async one-shot read
+  const [firestoreConsolidacion, setFirestoreConsolidacion] = useState<(DatosConsolidacion & { id: string })[]>([])
 
   useEffect(() => {
-    if (!isFirebaseConfigured) {
-      setConsolidacion(loadLocal<DatosConsolidacion>(getLocalKey('consolidacion', anio)))
-      return
-    }
+    if (!isFirebaseConfigured) return
     const constraints = [where('anio', '==', anio), orderBy('createdAt', 'desc')]
     getAll<DatosConsolidacion>('consolidacion', constraints)
-      .then(setConsolidacion)
+      .then(setFirestoreConsolidacion)
       .catch((err) => console.error('[Consolidacion] Failed to load overrides:', err))
   }, [anio])
+
+  const consolidacion = isFirebaseConfigured ? firestoreConsolidacion : localConsolidacion
 
   const manualData = useMemo(
     () => consolidacion.find((c) => c.cuatrimestre === cuatrimestre),

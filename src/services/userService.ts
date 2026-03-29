@@ -139,17 +139,16 @@ export async function getInvitationByEmail(email: string): Promise<Invitation | 
 
 export async function createInvitation(invitation: Invitation): Promise<void> {
   if (!isFirebaseConfigured) return
-  const { collection, addDoc } = await import('firebase/firestore')
-  await addDoc(collection(db!, 'invitations'), invitation)
+  // Use email as document ID so Firestore rules can verify invitation existence
+  // via exists(/databases/$(database)/documents/invitations/$(email))
+  const { doc, setDoc } = await import('firebase/firestore')
+  await setDoc(doc(db!, 'invitations', invitation.email), invitation)
 }
 
 export async function deleteInvitationByEmail(email: string): Promise<void> {
   if (!isFirebaseConfigured) return
-  const { collection, query, where, getDocs, deleteDoc } = await import('firebase/firestore')
-  const snap = await getDocs(query(collection(db!, 'invitations'), where('email', '==', email)))
-  for (const d of snap.docs) {
-    await deleteDoc(d.ref)
-  }
+  const { doc, deleteDoc } = await import('firebase/firestore')
+  await deleteDoc(doc(db!, 'invitations', email))
 }
 
 export async function getAllInvitations(): Promise<Invitation[]> {
