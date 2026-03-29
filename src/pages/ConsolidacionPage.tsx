@@ -2,7 +2,9 @@ import { APP_CONFIG } from '@/utils/constants'
 import { useState, memo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { useToastContext } from '@/context/ToastContext'
+import { useCollection } from '@/hooks/useCollection'
 import { useConsolidacionData } from '@/hooks/useConsolidacionData'
+import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo } from '@/types'
 import { MESES_POR_CUATRIMESTRE, INDICADORES_DIP, INDICADORES_AREPI, INDICADORES_CX_PARTOS } from '@/utils/constants'
 import { calcTasaPor1000, calcTasaPorcentaje, getRateBgColor } from '@/utils/rates'
 import { getErrorMessage } from '@/utils/errors'
@@ -97,16 +99,36 @@ const RateTable = memo(function RateTable({
 interface ConsolidacionPageProps {
   /** When rendered as an embedded tab, anio is passed as prop instead of outlet context */
   anio?: number
+  /**
+   * Pre-fetched data from a parent component (e.g. DashboardPage).
+   * When provided, ConsolidacionPage skips its own subscriptions to avoid
+   * duplicate Firestore listeners which cause internal assertion failures.
+   */
+  preloaded?: {
+    cirugias: (CirugiaTrazadora & { id: string })[]
+    partos: (PartoCesarea & { id: string })[]
+    dip: (DispositivoInvasivo & { id: string })[]
+  }
 }
 
-export default function ConsolidacionPage({ anio: propAnio }: ConsolidacionPageProps = {}) {
+export default function ConsolidacionPage({ anio: propAnio, preloaded }: ConsolidacionPageProps = {}) {
   const ctx = useOutletContext<{ anio: number } | null>()
   const anio = propAnio ?? ctx?.anio ?? new Date().getFullYear()
   const [cuatrimestre, setCuatrimestre] = useState(1)
   const [activeTab, setActiveTab] = useState<TabId>('dip')
   const meses = MESES_POR_CUATRIMESTRE[cuatrimestre]
 
-  const { getDipData, getArepiData, getCxPartosData } = useConsolidacionData(anio, cuatrimestre)
+  // Only subscribe to collections not already provided by the parent.
+  // This prevents duplicate Firestore subscriptions when embedded in DashboardPage.
+  const { data: ownCirugias } = useCollection<CirugiaTrazadora>('cirugias', preloaded ? undefined : anio)
+  const { data: ownPartos } = useCollection<PartoCesarea>('partos', preloaded ? undefined : anio)
+  const { data: ownDip } = useCollection<DispositivoInvasivo>('dip', preloaded ? undefined : anio)
+
+  const cirugias = preloaded?.cirugias ?? ownCirugias
+  const partos = preloaded?.partos ?? ownPartos
+  const dip = preloaded?.dip ?? ownDip
+
+  const { getDipData, getArepiData, getCxPartosData } = useConsolidacionData(anio, cuatrimestre, cirugias, partos, dip)
 
   const { addToast } = useToastContext()
 

@@ -267,7 +267,7 @@ export default function DashboardPage() {
 
           {activeTab === 'consolidacion' && (
             <Suspense fallback={<TabLoadingFallback />}>
-              <ConsolidacionPage anio={anio} />
+              <ConsolidacionPage anio={anio} preloaded={{ cirugias, partos, dip }} />
             </Suspense>
           )}
         </div>

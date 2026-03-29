@@ -4,17 +4,24 @@ import { CirugiaTrazadora, PartoCesarea, DispositivoInvasivo, DatosConsolidacion
 import { CX_PARTOS_SOURCE_MAP } from '@/utils/constants'
 
 /**
- * Encapsulates all consolidation rate calculation logic.
- * Extracts data from Firestore collections and provides getter functions
- * for DIP, AREpi, and Cx/Partos indicator data by month.
+ * Encapsulates consolidation rate calculation logic.
  *
- * This makes the rate calculations independently testable
- * without rendering ConsolidacionPage.
+ * Receives cirugias/partos/dip as parameters (not fetched here) to avoid
+ * duplicate Firestore subscriptions when rendered inside DashboardPage, which
+ * already subscribes to those same collections. Duplicate simultaneous
+ * onSnapshot subscriptions with IndexedDB persistence trigger Firestore
+ * internal assertion failures (ID: b815/ca9).
+ *
+ * Only `consolidacion` (manual override data) is fetched here since no
+ * other page subscribes to it.
  */
-export function useConsolidacionData(anio: number, cuatrimestre: number) {
-  const { data: cirugias } = useCollection<CirugiaTrazadora>('cirugias', anio)
-  const { data: partos } = useCollection<PartoCesarea>('partos', anio)
-  const { data: dip } = useCollection<DispositivoInvasivo>('dip', anio)
+export function useConsolidacionData(
+  anio: number,
+  cuatrimestre: number,
+  cirugias: (CirugiaTrazadora & { id: string })[],
+  partos: (PartoCesarea & { id: string })[],
+  dip: (DispositivoInvasivo & { id: string })[]
+) {
   const { data: consolidacion } = useCollection<DatosConsolidacion>('consolidacion', anio)
 
   const manualData = useMemo(
@@ -58,5 +65,5 @@ export function useConsolidacionData(anio: number, cuatrimestre: number) {
     return { infecciones: p.filter((pt) => pt[source.iaasField] === 'SI').length, denominador: p.length }
   }, [manualData, cirugias, partos])
 
-  return { getDipData, getArepiData, getCxPartosData, cirugias, partos, dip }
+  return { getDipData, getArepiData, getCxPartosData }
 }
