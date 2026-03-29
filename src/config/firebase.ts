@@ -1,5 +1,5 @@
 import { initializeApp, FirebaseApp } from 'firebase/app'
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, Firestore } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, persistentSingleTabManager, Firestore } from 'firebase/firestore'
 import type { Auth } from 'firebase/auth'
 
 /** True when Firebase env vars are present (false = demo/localStorage mode) */
@@ -24,8 +24,13 @@ if (isFirebaseConfigured) {
   // - onSnapshot fires immediately with cached data (instant UI)
   // - then fires again when server data arrives (background sync)
   // - works fully offline (critical for remote island hospital)
+  //
+  // Uses persistentSingleTabManager instead of persistentMultipleTabManager
+  // to avoid Firestore internal assertion failures (ID: b815/ca9) that occur
+  // when using multi-tab coordination with lazy-loaded components + Vite HMR.
+  // The app is designed for single-tab use in a hospital context.
   db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: true }) }),
   })
 }
 
