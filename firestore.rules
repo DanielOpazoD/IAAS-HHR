@@ -39,9 +39,14 @@ service cloud.firestore {
     // User profiles
     // -------------------------------------------------------------------------
     match /users/{uid} {
-      allow read: if isAuthenticated() && request.auth.uid == uid;
+      // Users can read their own profile; admins can read all profiles
+      allow read: if isAuthenticated()
+        && (request.auth.uid == uid || isAdmin());
+      // Only admin can update/delete profiles (e.g. assign roles)
       allow write: if isAuthenticated() && isAdmin()
         && isValidRole(request.resource.data.get('role', null));
+      // Any authenticated user can create their own profile on first login
+      // (role must be null — prevents self-granting admin)
       allow create: if isAuthenticated()
         && request.auth.uid == uid
         && (!('role' in request.resource.data) || request.resource.data.role == null);
